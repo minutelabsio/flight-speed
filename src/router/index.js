@@ -1,8 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import PlayerUI from '@/pages/player-ui'
 import About from '@/pages/about'
-import Playground from '@/pages/playground'
+import Home from '@/pages/home'
 
 // const CDN = 'https://cdn.minutelabs.io/what-is-a-day/audio'
 //
@@ -20,33 +19,7 @@ export default new Router({
     {
       path: '/'
       , name: 'home'
-      , component: PlayerUI
-      , redirect: { name: 'playground' }
-      , meta: {
-        // music: {
-        //   maxVolume: 0.7
-        //   , audio: [
-        //     `${CDN}/Candlepower.mp3`
-        //     , `${CDN}/Candlepower.ogg`
-        //   ]
-        // }
-      }
-      , children: [
-        // {
-        //   path: 'welcome'
-        //   , name: 'welcome'
-        //   , component: () => import('@/components/chapters/welcome')
-        //   , meta: {
-        //     title: 'Welcome'
-        //     , audio: getTracks('welcome')
-        //   }
-        // }
-      ]
-    }
-    , {
-      path: '/playground'
-      , name: 'playground'
-      , component: Playground
+      , component: Home
     }
     , {
       path: '/about'

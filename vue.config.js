@@ -1,6 +1,4 @@
 const path = require('path')
-// const ThreeWebpackPlugin = require('@wildpeaks/three-webpack-plugin')
-// const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
 const labConfig = require('./lab-config')
 
 process.env.VUE_APP_LAB_NAME = labConfig.title
@@ -15,14 +13,7 @@ module.exports = {
       __dirname: true
     }
     , plugins: [
-      new WasmPackPlugin({
-          crateDirectory: path.resolve(__dirname, 'src/wasm')
-          , watchDirectories: [
-            path.resolve(__dirname, 'src/wasm/src')
-          ]
-          , forceMode: 'production'
-      })
-  		// , new ThreeWebpackPlugin()
+
   	]
     , output: {
       globalObject: 'this'

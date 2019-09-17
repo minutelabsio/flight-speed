@@ -5,23 +5,10 @@ import router from '@/router'
 import Filters from '@/plugins/filters'
 import Gestures from '@/plugins/gestures'
 import Buefy from 'buefy'
-import VueCircleSlider from 'vue-circle-slider'
-import Copilot from 'copilot'
-import * as THREE from 'three'
 
 import '@mdi/font/css/materialdesignicons.css'
 // require styles
 import './styles/main.scss'
-
-Copilot.registerType({
-  type: 'Vector3'
-  , default: new THREE.Vector3()
-  , interpolator: (from, to, t) => {
-    let v = new THREE.Vector3()
-    v.copy( from )
-    return v.lerp( to, t )
-  }
-})
 
 // const isProduction = process.env.NODE_ENV === 'production'
 // Vue.use(VueAnalytics, {
@@ -47,12 +34,10 @@ Copilot.registerType({
 // import ElementComponents from '@/plugins/element-components'
 
 Vue.use(Buefy, {
-  defaultContainerElement: '#app .below-nav'
+  defaultContainerElement: '#app'
   // , defaultIconPack: 'fas'
 })
 
-Vue.use(VueCircleSlider)
-// Vue.use(ElementComponents)
 Vue.use(Filters)
 Vue.use(Gestures)
 
