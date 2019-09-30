@@ -10,6 +10,12 @@ export default {
   name: 'App'
   , data: () => ({
   })
+  , created(){
+    document.documentElement.addEventListener('scroll', e => {
+      console.log('test')
+      e.preventDefault()
+    })
+  }
 }
 </script>
 

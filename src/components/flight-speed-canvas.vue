@@ -108,6 +108,20 @@ export default {
         , scale: 0.2
       })
 
+      this.createFlyer({
+        textureName: 'testDrag'
+        , y: -500
+        , speed: 7
+        , scale: 0.8
+      })
+
+      this.createFlyer({
+        textureName: 'testDrag'
+        , y: -1300
+        , speed: 15
+        , scale: 1.2
+      })
+
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
     }
@@ -127,9 +141,9 @@ export default {
       sprite.height = aspect * texture.height
       sprite.scale.set(cfg.scale, cfg.scale)
       sprite.anchor.set(0.5, 0.5)
-      sprite.rotation = -Math.PI / 2
+      sprite.rotation = Math.PI / 2
       sprite.position.set(cfg.x || this.flyerContainer.right + SCREEN_MARGIN, 0)
-      sprite.moveSpeed = -cfg.speed
+      sprite.moveSpeed = cfg.speed
       sprite.zIndex = 10
 
       container.addChild(sprite)
@@ -203,6 +217,10 @@ export default {
       let {x,y} = obj.position
 
       x += v * dt
+
+      if ( (x - hw - SCREEN_MARGIN) > this.flyerContainer.right ){
+        x = this.flyerContainer.left - (hw + SCREEN_MARGIN)
+      }
 
       if ( (x + hw + SCREEN_MARGIN) < this.flyerContainer.left ){
         x = this.flyerContainer.right + hw + SCREEN_MARGIN
