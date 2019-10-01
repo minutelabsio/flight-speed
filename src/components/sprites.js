@@ -4,6 +4,7 @@ export const Loader = PIXI.Loader.shared
 
 const SPRITES = {
   'testDrag': require('@/assets/dragon-test.png')
+  , 'nyan': require('@/assets/nyan.png')
 }
 
 let LOAD_SPRITES_PROMISE = null
