@@ -54,7 +54,7 @@ export default {
       , antialias: true    // default: false
       , transparent: false // default: false
       , resolution: 1      // default:
-      , backgroundColor: 0x335533
+      // , backgroundColor: 0x335533
     })
 
     app.renderer.autoResize = true
@@ -98,7 +98,7 @@ export default {
     this.viewport.zIndex = 10
     this.stage.addChild(this.viewport)
 
-    this.viewport.addChild(this.makeGuides())
+    // this.viewport.addChild(this.makeGuides())
 
     this.init()
   }
@@ -144,6 +144,8 @@ export default {
         , scale: 0.6 * scale
       })
 
+      this.initBg()
+
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
     }
@@ -168,6 +170,20 @@ export default {
       guides.alpha = 0.4
       guides.zIndex = -1
       return guides
+    }
+    , initBg(){
+      let texture = Loader.resources.cityTile.texture
+      let tile = new PIXI.TilingSprite(texture, this.dimensions.width, this.dimensions.height)
+      tile.alpha = 0.6
+
+      this.viewport.on('moved', () => {
+        let x = this.viewport.center.x
+        let y = -this.viewport.center.y
+        let scale = this.viewport.scaled
+        tile.tilePosition.set(x * scale, y * scale)
+      })
+
+      this.stage.addChild(tile)
     }
     , createFlyer( cfg ){
 
