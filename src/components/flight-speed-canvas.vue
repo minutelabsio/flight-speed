@@ -1,10 +1,12 @@
 <script>
+import Promise from 'bluebird'
 import _debounce from 'lodash/debounce'
+import { tween } from 'shifty'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
-const SCREEN_MARGIN = 100
+const SCREEN_MARGIN = 50
 
 // function ignoreUselessErrors(error){
 //   if ( error.message.match('Resource named') ){
@@ -25,13 +27,34 @@ function resizeHooks(self){
   })
 }
 
+function makeOffscreenThumb( texture ){
+  let offscreenIndicator = new PIXI.Graphics()
+  let bubble = new PIXI.Graphics()
+  let r = 30
+  bubble.beginFill(0xffffff, 1)
+  bubble.drawCircle(0, 0, r)
+  bubble.drawPolygon([-12, r - 6, 0, r + 8, 12, r - 6])
+  bubble.endFill()
+  bubble.rotation = Math.PI
+  bubble.name = 'bubble'
+  let thumb = new PIXI.Sprite(texture)
+  let s = (2 * r - 10) / Math.max(texture.width, texture.height)
+  thumb.scale.set(s, s)
+  thumb.anchor.set(0.5, 0.5)
+  offscreenIndicator.addChild(bubble)
+  offscreenIndicator.addChild(thumb)
+
+  return offscreenIndicator
+}
+
 export default {
   name: 'FlightSpeedCanvas'
   , props: {
   }
   , components: {}
   , data: () => ({
-    dimensions: {
+    paused: true
+    , dimensions: {
       width: window.innerWidth
       , height: window.innerHeight
     }
@@ -39,7 +62,6 @@ export default {
   , created(){
 
     resizeHooks(this)
-
     this.$on('resize', () => {
       this.dimensions = {
         width: window.innerWidth
@@ -72,33 +94,57 @@ export default {
       , passiveWheel: false
     })
 
+    this.viewport = viewport
+
     viewport
-      .drag()
+      // .drag()
       .decelerate()
-      .pinch({ })
-      .wheel({ smooth: 20 })
+      .pinch({ center })
+      .wheel({ center, smooth: 20 })
       .clampZoom({
         minHeight: 100
         , maxHeight: 100000
       })
-      .clamp({
-        top: -100000
-        , bottom: 100000
-        , left: 0
-        , right: 0
-      })
+      // .clamp({
+      //   top: -100000
+      //   , bottom: 100000
+      //   , left: 0
+      //   , right: 0
+      // })
     // viewport.snap(0, 0, { time: 0 })
     viewport.ensureVisible(-this.dimensions.width/2, -this.dimensions.height/2, this.dimensions.width, this.dimensions.height)
+    viewport.sortableChildren = true
+    viewport.zIndex = 10
 
-    app.stage.addChild(viewport)
+    viewport.on('zoomed', () => {
+      this.$emit('zoom', this.viewport.scaled)
+    })
+
+    this.flyersLayer = new PIXI.Container()
+    this.flyersLayer.sortableChildren = true
+    this.flyersLayer.zIndex = 10
+    this.viewport.addChild(this.flyersLayer)
+
+    this.trackLayer = new PIXI.Container()
+    this.trackLayer.zIndex = 0
+    this.viewport.addChild(this.trackLayer)
 
     this.stage = app.stage
     this.stage.sortableChildren = true
-    this.viewport = viewport
-    this.viewport.zIndex = 10
     this.stage.addChild(this.viewport)
 
+    this.entranceOverlay = new PIXI.Sprite(PIXI.Texture.WHITE)
+    this.entranceOverlay.width = this.dimensions.width
+    this.entranceOverlay.height = this.dimensions.height
+    this.entranceOverlay.zIndex = 1000
+    this.stage.addChild(this.entranceOverlay)
+
     // this.viewport.addChild(this.makeGuides())
+
+    this.$watch('dimensions', ({ width, height }) => {
+      viewport.resize(width, height)
+      viewport.snap(0, 0, { time: 0 })
+    })
 
     this.init()
   }
@@ -121,33 +167,56 @@ export default {
 
       this.flyers = []
 
-      let scale = 0.5
+      let scale = 0.01
 
-      this.createFlyer({
-        textureName: 'nyan'
-        , y: 0
-        , speed: 4
-        , scale: 0.1 * scale
-      })
+      function getScale( speed ){
+        return speed * speed * scale
+      }
 
-      this.createFlyer({
-        textureName: 'nyan'
-        , y: -500
-        , speed: 7
-        , scale: 0.4 * scale
-      })
-
-      this.createFlyer({
-        textureName: 'nyan'
-        , y: -1300
-        , speed: 15
-        , scale: 0.6 * scale
-      })
+      for ( let i = 0; i < 6; i++ ){
+        let speed = 4 * i + 4
+        this.createFlyer({
+          textureName: 'nyan'+i
+          , x: this.viewport.left / 4
+          , y: i * 600 * getScale(speed) * (i % 2 ? 1 : -1)
+          , speed
+          , scale: getScale(speed)
+        })
+      }
 
       this.initBg()
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
+      this.animateEntrance()
+      Promise.delay(200).then(() => {
+        this.paused = false
+      })
+    }
+    , animateEntrance(){
+      this.zoom( 0.01 )
+
+      tween({
+        from: { opacity: 1 }
+        , to: { opacity: 0 }
+        , delay: 500
+        , duration: 2000
+        , easing: 'easeInOutQuad'
+        , step: state => {
+          this.entranceOverlay.alpha = state.opacity
+        }
+      })
+
+      return tween({
+        from: { zoom: 0.01 }
+        , to: { zoom: 0.1 }
+        , delay: 1000
+        , duration: 4000
+        , easing: 'easeInOutQuad'
+        , step: state => {
+          this.zoom( state.zoom )
+        }
+      })
     }
     , makeGuides(){
       // guides
@@ -173,29 +242,39 @@ export default {
     }
     , initBg(){
       let texture = Loader.resources.cityTile.texture
-      let tile = new PIXI.TilingSprite(texture, this.dimensions.width, this.dimensions.height)
+      let {width, height} = this.dimensions
+      let tile = new PIXI.TilingSprite(texture, width, height)
       tile.alpha = 0.6
+      tile.tilePosition.set(width/2, height/2)
 
-      this.viewport.on('moved', () => {
-        let x = this.viewport.center.x
-        let y = -this.viewport.center.y
-        let scale = this.viewport.scaled
-        tile.tilePosition.set(x * scale, y * scale)
+      // this.viewport.on('moved', () => {
+      //   let x = this.viewport.center.x
+      //   let y = -this.viewport.center.y
+      //   let scale = this.viewport.scaled
+      //   console.log(scale)
+      //   // let parallax = scale * 0.1
+      //   tile.tilePosition.set(x * scale, y * scale)
+      //   // tile.tileScale.set(parallax, parallax)
+      // })
+
+      this.$on('zoom', scale => {
+        let parallax = Math.pow(scale, 0.05)
+        tile.tileScale.set(parallax, parallax)
+      })
+
+      this.$watch('dimensions', ({ width, height }) => {
+        tile.width = width
+        tile.height = height
       })
 
       this.stage.addChild(tile)
     }
     , createFlyer( cfg ){
 
-      let container = new PIXI.Container()
-      // container.interactive = true
-      // container.interactiveChildren = true
-      container.sortableChildren = true
-      container.y = cfg.y
-
+      const viewport = this.viewport
       // flying thing
       let texture = Loader.resources[cfg.textureName].texture
-      let sprite = new PIXI.Graphics()
+      let movingGraphic = new PIXI.Graphics()
       let image = new PIXI.Sprite(texture)
       let scale = cfg.scale * 1000 / texture.width
       let width = texture.width * scale
@@ -203,12 +282,12 @@ export default {
       image.anchor.set(0.5, 0.5)
       // image.rotation = Math.PI / 2
 
-      sprite.position.set(cfg.x || this.viewport.right + SCREEN_MARGIN, 0)
-      sprite.moveSpeed = cfg.speed
-      sprite.zIndex = 10
-      sprite.addChild(image)
+      movingGraphic.position.set(cfg.x || this.viewport.right + SCREEN_MARGIN, 0)
+      movingGraphic.moveSpeed = cfg.speed
+      movingGraphic.zIndex = Math.floor(1 / cfg.scale)
+      movingGraphic.addChild(image)
 
-      container.addChild(sprite)
+      this.flyersLayer.addChild(movingGraphic)
 
       // track
       let track = new PIXI.Graphics()
@@ -231,16 +310,18 @@ export default {
       }).on('pointerout', () => {
         track.alpha = 0.4
       }).on('pointerdown', (e) => {
+        // if mousebutton is used and it's not left btn, this will be non-zero
+        if ( e.data.originalEvent.button ){ return }
         e.stopPropagation()
         track.data = e.data
         track.dragging = true
       }).on('pointermove', () => {
         if ( track.dragging ){
-          const newPosition = track.data.getLocalPosition(container.parent)
+          const newPosition = track.data.getLocalPosition(track.parent)
           const bot = this.viewport.bottom
           const top = this.viewport.top
           const newY = Math.max(top, Math.min(bot, newPosition.y))
-          container.y = newY
+          setYPosition( newY )
         }
       })
       .on('pointerup', stopDrag)
@@ -251,7 +332,14 @@ export default {
         track.dragging = false
       }
 
-      container.addChild(track)
+      this.$on('zoom', scale => {
+        // unzoom the track
+        const s = 1 / scale
+        track.scale.set(1, s)
+        trail.scale.set(1, s)
+      })
+
+      this.trackLayer.addChild(track)
 
       // trail
       let trailWidth = 100 * cfg.speed
@@ -267,48 +355,88 @@ export default {
       let trail = new PIXI.Sprite(PIXI.Texture.from(canvas))
       trail.anchor.set(1, 0.5)
       trail.x = -image.width / 2
-      sprite.addChild(trail)
+      movingGraphic.addChild(trail)
 
-      this.viewport.on('zoomed', (e) => {
-        // unzoom the track
-        const v = e.viewport
-        const s = 1 / v.scaled
-        track.scale.set(1, s)
-        trail.scale.set(1, s)
+      let offscreenIndicator = makeOffscreenThumb(texture)
+      offscreenIndicator.position.set(100, 40)
+      offscreenIndicator.zIndex = 10
+      this.stage.addChild(offscreenIndicator)
+
+      this.$on('zoom', () => {
+        let y = movingGraphic.position.y
+        let margin = movingGraphic.height * 0.6
+        let isAbove = (y + margin) < viewport.top
+        let isBelow = (y - margin) > viewport.bottom
+        let isOffscreen = isAbove || isBelow
+
+        if ( isOffscreen !== offscreenIndicator.visible ){
+          offscreenIndicator.visible = isOffscreen
+          offscreenIndicator.getChildByName('bubble').rotation = isAbove ? Math.PI : 0
+          offscreenIndicator.position.y = isAbove ? 45 : this.dimensions.height - 45
+        }
       })
 
-      this.viewport.addChild(container)
+      function setYPosition( y ){
+        movingGraphic.position.y = y
+        track.position.y = y
+      }
+
+      function setXPosition( x ){
+        movingGraphic.position.x = x
+        offscreenIndicator.position.x = viewport.toScreen(x, 0).x
+      }
+
+      setYPosition( cfg.y )
 
       this.flyers.push({
-        sprite
+        movingGraphic
         , track
-        , container
+        , setXPosition
+        , setYPosition
       })
     }
     , draw(dt){
+      if ( this.paused ){ return }
       this.animateFlyers(dt)
     }
     , animateFlyers(dt){
       for (let i = 0, l = this.flyers.length; i < l; i++){
-        this.moveWrap(this.flyers[i].sprite, dt)
+        this.moveWrap(this.flyers[i], dt)
       }
     }
-    , moveWrap(obj, dt){
+    , moveWrap(flyer, dt){
+      let obj = flyer.movingGraphic
       let v = obj.moveSpeed
       let hw = 0.5 * obj.width
-      let {x,y} = obj.position
+      let { x } = obj.position
 
       x += v * dt
 
-      if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
-        x = this.viewport.left - (hw + SCREEN_MARGIN)
+      if ( v > 0 ){
+        if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
+          x = this.viewport.left - (hw + SCREEN_MARGIN)
+        }
+
+        if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
+          x = this.viewport.left - (hw + SCREEN_MARGIN)
+        }
       }
 
-      if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
-        x = this.viewport.right + hw + SCREEN_MARGIN
+      if ( v < 0 ){
+        if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
+          x = this.viewport.right + hw + SCREEN_MARGIN
+        }
+
+        if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
+          x = this.viewport.left - (hw + SCREEN_MARGIN)
+        }
       }
 
-      obj.position.set(x, y)
+      flyer.setXPosition(x)
+    }
+    , zoom( scale ){
+      this.viewport.setZoom( scale )
+      this.$emit('zoom', scale)
     }
   }
   , render(h){
