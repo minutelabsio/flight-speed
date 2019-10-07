@@ -2,6 +2,7 @@
 import Promise from 'bluebird'
 import _debounce from 'lodash/debounce'
 import { tween } from 'shifty'
+import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
@@ -29,6 +30,45 @@ function resizeHooks(self){
   self.$on('hook:beforeDestroy', () => {
     window.removeEventListener('resize', resize)
   })
+}
+
+function lengthScale( maxWidth = 400 ){
+  let unitWidth = maxWidth / 2
+  let graphics = new PIXI.Graphics()
+  let text = new PIXI.Text('0', {
+    fontFamily: 'latin-modern-mono'
+    , fontSize: 14
+    , fill: 0xffffff
+    , align: 'center'
+  })
+  text.anchor.set(0.5)
+  graphics.addChild(text)
+
+  function formatUnits( d ){
+    let v = unit(d, 'm')
+    return v.toString()
+  }
+
+  function setScale( s ){
+    let units = Math.pow(10, Math.ceil(Math.log10(1/s)))
+    let targetWidth = s * unitWidth
+
+    if ( (units * targetWidth) > maxWidth ){
+      units *= 0.1
+    }
+
+    graphics.clear()
+    graphics.lineStyle(2, 0xffffff, 1)
+    graphics.moveTo(0, 0)
+    graphics.lineTo(-targetWidth * units, 0)
+    text.text = formatUnits(units)
+    text.position.set(-targetWidth * units/2, -20)
+  }
+
+  return {
+    setScale
+    , graphics
+  }
 }
 
 function resourceToGraphics( name, scale = 1 ){
@@ -208,6 +248,7 @@ export default {
       }
 
       this.initBg()
+      this.initLengthScale()
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
@@ -240,6 +281,18 @@ export default {
           this.zoom( state.zoom )
         }
       })
+    }
+    , initLengthScale(){
+      let ls = lengthScale()
+      ls.graphics.zIndex = 100
+      ls.graphics.position.set(this.dimensions.width - 50, this.dimensions.height - 50)
+      ls.setScale(1)
+
+      this.$on('zoom', s => {
+        ls.setScale(s)
+      })
+
+      this.stage.addChild(ls.graphics)
     }
     , makeGuides(){
       // guides
@@ -380,7 +433,7 @@ export default {
       offscreenIndicator.zIndex = 10
       this.stage.addChild(offscreenIndicator)
 
-      this.$on('zoom', () => {
+      const handleZoom = () => {
         let y = movingGraphic.position.y
         let margin = movingGraphic.height * 0.6
         let isAbove = (y + margin) < viewport.top
@@ -392,7 +445,10 @@ export default {
           offscreenIndicator.getChildByName('bubble').rotation = isAbove ? Math.PI : 0
           offscreenIndicator.position.y = isAbove ? 45 : this.dimensions.height - 45
         }
-      })
+      }
+
+      this.$on('zoom', handleZoom)
+      this.$watch('dimensions', handleZoom)
 
       function setYPosition( y ){
         movingGraphic.position.y = y
