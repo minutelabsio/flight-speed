@@ -6,6 +6,10 @@ import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
 
+const svgResources = {
+  'bee': require('@/assets/bee.svg')
+}
+
 const SCREEN_MARGIN = 50
 
 // function ignoreUselessErrors(error){
@@ -27,7 +31,26 @@ function resizeHooks(self){
   })
 }
 
-function makeOffscreenThumb( texture ){
+function resourceToGraphics( name, scale = 1 ){
+  let image
+  let resource = svgResources[name]
+
+  if ( resource ){
+    // resource = new PIXI.resources.SVGResource()
+    image = new PIXI.Sprite.from(resource, { scale: 100 })
+  } else {
+    resource = Loader.resources[name].texture
+    image = new PIXI.Sprite(resource)
+  }
+
+  let s = scale * 1000 / image.texture.width
+  image.scale.set(s, s)
+
+  image.anchor.set(0.5, 0.5)
+  return image
+}
+
+function makeOffscreenThumb( resource ){
   let offscreenIndicator = new PIXI.Graphics()
   let bubble = new PIXI.Graphics()
   let r = 30
@@ -37,8 +60,8 @@ function makeOffscreenThumb( texture ){
   bubble.endFill()
   bubble.rotation = Math.PI
   bubble.name = 'bubble'
-  let thumb = new PIXI.Sprite(texture)
-  let s = (2 * r - 10) / Math.max(texture.width, texture.height)
+  let thumb = resourceToGraphics(resource)
+  let s = thumb.scale.x * (2 * r - 10) / Math.max(thumb.width, thumb.height)
   thumb.scale.set(s, s)
   thumb.anchor.set(0.5, 0.5)
   offscreenIndicator.addChild(bubble)
@@ -176,7 +199,7 @@ export default {
       for ( let i = 0; i < 6; i++ ){
         let speed = 4 * i + 4
         this.createFlyer({
-          textureName: 'nyan'+i
+          resource: 'nyan'+i
           , x: this.viewport.left / 4
           , y: i * 600 * getScale(speed) * (i % 2 ? 1 : -1)
           , speed
@@ -199,7 +222,7 @@ export default {
       tween({
         from: { opacity: 1 }
         , to: { opacity: 0 }
-        , delay: 500
+        , delay: 0
         , duration: 2000
         , easing: 'easeInOutQuad'
         , step: state => {
@@ -212,7 +235,7 @@ export default {
         , to: { zoom: 0.1 }
         , delay: 1000
         , duration: 4000
-        , easing: 'easeInOutQuad'
+        , easing: 'easeInOutSine'
         , step: state => {
           this.zoom( state.zoom )
         }
@@ -273,13 +296,8 @@ export default {
 
       const viewport = this.viewport
       // flying thing
-      let texture = Loader.resources[cfg.textureName].texture
       let movingGraphic = new PIXI.Graphics()
-      let image = new PIXI.Sprite(texture)
-      let scale = cfg.scale * 1000 / texture.width
-      let width = texture.width * scale
-      image.scale.set(scale, scale)
-      image.anchor.set(0.5, 0.5)
+      let image = resourceToGraphics(cfg.resource, cfg.scale)
       // image.rotation = Math.PI / 2
 
       movingGraphic.position.set(cfg.x || this.viewport.right + SCREEN_MARGIN, 0)
@@ -357,7 +375,7 @@ export default {
       trail.x = -image.width / 2
       movingGraphic.addChild(trail)
 
-      let offscreenIndicator = makeOffscreenThumb(texture)
+      let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
       offscreenIndicator.zIndex = 10
       this.stage.addChild(offscreenIndicator)
