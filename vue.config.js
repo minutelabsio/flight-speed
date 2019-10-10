@@ -19,15 +19,22 @@ module.exports = {
       globalObject: 'this'
     }
     , module: {
-      // rules: [
-      //   {
+      rules: [
+        {
+          test: /\.ya?ml$/,
+          use: [
+            'json-loader',
+            'yaml-loader'
+          ]
+        }
+      //   , {
       //     test: /\.js$/
       //     , use: [
       //       'comlink-loader'
       //     ]
       //     , include: [ path.resolve(__dirname, 'src/workers') ]
       //   }
-      // ]
+      ]
     }
   }
   , css: {

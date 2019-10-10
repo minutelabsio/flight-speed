@@ -236,7 +236,7 @@ export default {
         return speed * speed * scale
       }
 
-      for ( let i = 0; i < 6; i++ ){
+      for ( let i = 2; i < 6; i++ ){
         let speed = 4 * i + 4
         this.createFlyer({
           resource: 'nyan'+i

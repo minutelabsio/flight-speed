@@ -1,0 +1,13 @@
+- classic-nyan: # this is the id
+  name: 'The OG Nyan Cat' # display name
+  image: 'nyan.png' # no path information, just the image name
+  speed: 4 # Use whatever units you want, just use the same across all
+  size: 0.16 # Again, whatever units you want. eg: torso length / wingspan
+  mass: 1 # don't know if we want this for extra information
+
+- jackson-nyan:
+  name: 'Moonwalking nyan'
+  image: 'nyan-jackson.gif'
+  speed: 8
+  size: 0.64
+  mass: 2
