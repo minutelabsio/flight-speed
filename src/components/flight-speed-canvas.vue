@@ -186,14 +186,14 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     })
 
-    this.flyersLayer = new PIXI.Container()
-    this.flyersLayer.sortableChildren = true
-    this.flyersLayer.zIndex = 10
-    // this.flyersLayer.filters = [new DropShadowFilter({
+    this.creaturesLayer = new PIXI.Container()
+    this.creaturesLayer.sortableChildren = true
+    this.creaturesLayer.zIndex = 10
+    // this.creaturesLayer.filters = [new DropShadowFilter({
     //   shadowOnly: false
     //   , quality: 9
     // })]
-    this.viewport.addChild(this.flyersLayer)
+    this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
     this.trackLayer.zIndex = 0
@@ -234,7 +234,7 @@ export default {
     async init(){
       await loadSprites()
 
-      this.flyers = []
+      this.creatures = []
 
       Creatures.forEach(c => {
         this.createFlyer({
@@ -368,6 +368,7 @@ export default {
     , createFlyer( cfg ){
 
       const viewport = this.viewport
+      // let motionBlur = new MotionBlurFilter({})
       // flying thing
       let movingGraphic = new PIXI.Graphics()
       let image = resourceToGraphics(cfg.resource, cfg.scale)
@@ -376,9 +377,10 @@ export default {
       movingGraphic.position.set(cfg.x || this.viewport.right + SCREEN_MARGIN, 0)
       movingGraphic.moveSpeed = cfg.speed
       movingGraphic.zIndex = Math.floor(1 / cfg.scale)
+      // movingGraphic.filters = [motionBlur]
       movingGraphic.addChild(image)
 
-      this.flyersLayer.addChild(movingGraphic)
+      this.creaturesLayer.addChild(movingGraphic)
 
       // track
       let track = new PIXI.Graphics()
@@ -430,6 +432,7 @@ export default {
         const s = 1 / scale
         track.scale.set(1, s)
         trail.scale.set(1, s)
+        // motionBlur.velocity.x = cfg.speed * scale * 2
       })
 
       this.trackLayer.addChild(track)
@@ -457,23 +460,6 @@ export default {
       offscreenIndicator.interactive = true
       this.bubbleLayer.addChild(offscreenIndicator)
 
-      const handleZoom = () => {
-        let y = movingGraphic.position.y
-        let margin = movingGraphic.height * 0.6
-        let isAbove = (y + margin) < viewport.top
-        let isBelow = (y - margin) > viewport.bottom
-        let isOffscreen = isAbove || isBelow
-
-        if ( isOffscreen !== offscreenIndicator.visible ){
-          offscreenIndicator.visible = isOffscreen
-          offscreenIndicator.getChildByName('bubble').rotation = isAbove ? Math.PI : 0
-          offscreenIndicator.position.y = isAbove ? 45 : this.dimensions.height - 45
-        }
-      }
-
-      this.$on('zoom', handleZoom)
-      this.$watch('dimensions', handleZoom)
-
       function setYPosition( y ){
         movingGraphic.position.y = y
         track.position.y = y
@@ -484,8 +470,6 @@ export default {
         offscreenIndicator.position.x = viewport.toScreen(x, 0).x
       }
 
-      setYPosition( cfg.y )
-
       const creature = {
         movingGraphic
         , track
@@ -493,23 +477,49 @@ export default {
         , setYPosition
       }
 
+      const handleZoom = () => {
+        let y = movingGraphic.position.y
+        let margin = movingGraphic.height * 0.6
+        let isAbove = (y + margin) < viewport.top
+        let isBelow = (y - margin) > viewport.bottom
+        let isOffscreen = isAbove || isBelow
+
+        if ( isOffscreen !== offscreenIndicator.visible ){
+          creature.paused = false
+          offscreenIndicator.visible = isOffscreen
+          offscreenIndicator.getChildByName('bubble').rotation = isAbove ? Math.PI : 0
+          offscreenIndicator.position.y = isAbove ? 45 : this.dimensions.height - 45
+        }
+      }
+
+      this.$on('zoom', handleZoom)
+      this.$watch('dimensions', handleZoom)
+
       offscreenIndicator.on('click', () => {
         this.zoomToCreature(creature)
+      }).on('pointerover', () => {
+        creature.paused = true
+      }).on('pointerout', () => {
+        creature.paused = false
       })
 
-      this.flyers.push(creature)
+      setYPosition( cfg.y )
+      this.creatures.push(creature)
     }
     , draw(dt){
       if ( this.paused ){ return }
       this.animateFlyers(dt)
     }
     , animateFlyers(dt){
-      for (let i = 0, l = this.flyers.length; i < l; i++){
-        this.moveWrap(this.flyers[i], dt)
+      for (let i = 0, l = this.creatures.length; i < l; i++){
+        let creature = this.creatures[i]
+        if ( !creature.paused ){
+          this.moveWrap(creature, dt)
+        }
       }
     }
-    , moveWrap(flyer, dt){
-      let obj = flyer.movingGraphic
+    , moveWrap(creature, dt){
+      let obj = creature.movingGraphic
       let v = obj.moveSpeed
       let hw = 0.5 * obj.width
       let { x } = obj.position
@@ -536,7 +546,7 @@ export default {
         }
       }
 
-      flyer.setXPosition(x)
+      creature.setXPosition(x)
     }
     , zoomToCreature(creature){
       const vp = this.viewport

@@ -11,6 +11,8 @@
   "dependencies": {
     "@mdi/font": "^4.1.95",
     "@pixi/filter-drop-shadow": "^3.0.3",
+    "@pixi/filter-motion-blur": "^3.0.3",
+    "@pixi/filter-simple-lightmap": "^3.0.3",
     "babel-plugin-component": "^1.1.1",
     "buefy": "^0.8.2",
     "bulma": "^0.7.1",
