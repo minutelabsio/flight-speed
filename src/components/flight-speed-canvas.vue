@@ -189,9 +189,10 @@ export default {
     this.flyersLayer = new PIXI.Container()
     this.flyersLayer.sortableChildren = true
     this.flyersLayer.zIndex = 10
-    this.flyersLayer.filters = [new DropShadowFilter({
-      shadowOnly: false
-    })]
+    // this.flyersLayer.filters = [new DropShadowFilter({
+    //   shadowOnly: false
+    //   , quality: 9
+    // })]
     this.viewport.addChild(this.flyersLayer)
 
     this.trackLayer = new PIXI.Container()
@@ -299,12 +300,16 @@ export default {
     }
     , initLengthScale(){
       let ls = lengthScale()
-      ls.graphics.zIndex = 100
+      ls.graphics.zIndex = 9
       ls.graphics.position.set(this.dimensions.width - 50, this.dimensions.height - 50)
       ls.setScale(1)
 
       this.$on('zoom', s => {
         ls.setScale(s)
+      })
+
+      this.$watch('dimensions', ({ width, height }) => {
+        ls.graphics.position.set(width - 50, height - 50)
       })
 
       this.stage.addChild(ls.graphics)
@@ -389,7 +394,7 @@ export default {
       track.y = 0
       track.zIndex = -1
       track.hitArea = new PIXI.Rectangle(0, -20, 200000, 40)
-      track.cursor = 'pointer'
+      track.cursor = 'grab'
 
       track.on('pointerover', () => {
         track.alpha = 1
@@ -400,6 +405,7 @@ export default {
         if ( e.data.originalEvent.button ){ return }
         e.stopPropagation()
         track.data = e.data
+        track.cursor = 'grabbing'
         track.dragging = true
       }).on('pointermove', () => {
         if ( track.dragging ){
@@ -415,6 +421,7 @@ export default {
 
       function stopDrag(){
         track.data = null
+        track.cursor = 'grab'
         track.dragging = false
       }
 
@@ -446,6 +453,8 @@ export default {
       let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
       offscreenIndicator.zIndex = 10
+      offscreenIndicator.buttonMode = true
+      offscreenIndicator.interactive = true
       this.bubbleLayer.addChild(offscreenIndicator)
 
       const handleZoom = () => {
@@ -477,12 +486,18 @@ export default {
 
       setYPosition( cfg.y )
 
-      this.flyers.push({
+      const creature = {
         movingGraphic
         , track
         , setXPosition
         , setYPosition
+      }
+
+      offscreenIndicator.on('click', () => {
+        this.zoomToCreature(creature)
       })
+
+      this.flyers.push(creature)
     }
     , draw(dt){
       if ( this.paused ){ return }
@@ -503,25 +518,41 @@ export default {
 
       if ( v > 0 ){
         if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
-          x = this.viewport.left - (hw + SCREEN_MARGIN)
+          x = this.viewport.left - hw
         }
 
         if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
-          x = this.viewport.left - (hw + SCREEN_MARGIN)
+          x = this.viewport.left - hw
         }
       }
 
       if ( v < 0 ){
         if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
-          x = this.viewport.right + hw + SCREEN_MARGIN
+          x = this.viewport.right + hw
         }
 
         if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
-          x = this.viewport.left - (hw + SCREEN_MARGIN)
+          x = this.viewport.left - hw
         }
       }
 
       flyer.setXPosition(x)
+    }
+    , zoomToCreature(creature){
+      const vp = this.viewport
+      let hh = Math.abs(creature.movingGraphic.position.y)
+      let zoom = vp.screenHeight / (2 * hh + creature.movingGraphic.height)
+
+      tween({
+        from: { zoom: vp.scaled }
+        , to: { zoom }
+        , delay: 0
+        , duration: 1000
+        , easing: 'easeOutQuad'
+        , step: state => {
+          this.zoom( state.zoom )
+        }
+      })
     }
     , zoom( scale ){
       this.viewport.setZoom( scale )
