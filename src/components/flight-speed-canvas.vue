@@ -189,10 +189,10 @@ export default {
     this.creaturesLayer = new PIXI.Container()
     this.creaturesLayer.sortableChildren = true
     this.creaturesLayer.zIndex = 10
-    this.creaturesLayer.filters = [new DropShadowFilter({
-      shadowOnly: false
-      , quality: 9
-    })]
+    // this.creaturesLayer.filters = [new DropShadowFilter({
+    //   shadowOnly: false
+    //   , quality: 9
+    // })]
     this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
