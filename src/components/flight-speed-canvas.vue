@@ -6,6 +6,7 @@ import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
+import Creatures from '@/config/creatures.yaml'
 
 const svgResources = {
   'bee': require('@/assets/bee.svg')
@@ -229,6 +230,16 @@ export default {
       await loadSprites()
 
       this.flyers = []
+
+      Creatures.forEach(c => {
+        this.createFlyer({
+          resource: c.image
+          , x: this.viewport.left / 4
+          , y: c.position.y
+          , speed: c.speed
+          , scale: c.size
+        })
+      })
 
       let scale = 0.01
 

@@ -1,9 +1,14 @@
+# note the dash in front
+# each indentation is 2 spaces
 - classic-nyan: # this is the id
   name: 'The OG Nyan Cat' # display name
   image: 'nyan.png' # no path information, just the image name
   speed: 4 # Use whatever units you want, just use the same across all
   size: 0.16 # Again, whatever units you want. eg: torso length / wingspan
   mass: 1 # don't know if we want this for extra information
+  position:
+    x: 0 # ignored for now
+    y: 0 # height above (or below) the middle
 
 - jackson-nyan:
   name: 'Moonwalking nyan'
@@ -11,3 +16,6 @@
   speed: 8
   size: 0.64
   mass: 2
+  position:
+    x: 0
+    y: 1000
