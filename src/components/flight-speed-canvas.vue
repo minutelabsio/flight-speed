@@ -5,6 +5,7 @@ import { tween } from 'shifty'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
+import { DropShadowFilter } from '@pixi/filter-drop-shadow'
 import { Viewport } from 'pixi-viewport'
 import Creatures from '@/config/creatures.yaml'
 
@@ -143,6 +144,7 @@ export default {
       // , backgroundColor: 0x335533
     })
 
+    this.stage = app.stage
     app.renderer.autoResize = true
     app.renderer.view.style.position = 'absolute'
     app.renderer.view.style.display = 'block'
@@ -187,15 +189,21 @@ export default {
     this.flyersLayer = new PIXI.Container()
     this.flyersLayer.sortableChildren = true
     this.flyersLayer.zIndex = 10
+    this.flyersLayer.filters = [new DropShadowFilter({
+      shadowOnly: false
+    })]
     this.viewport.addChild(this.flyersLayer)
 
     this.trackLayer = new PIXI.Container()
     this.trackLayer.zIndex = 0
     this.viewport.addChild(this.trackLayer)
 
-    this.stage = app.stage
     this.stage.sortableChildren = true
     this.stage.addChild(this.viewport)
+
+    this.bubbleLayer = new PIXI.Container()
+    this.bubbleLayer.zIndex = 11
+    this.stage.addChild(this.bubbleLayer)
 
     this.entranceOverlay = new PIXI.Sprite(PIXI.Texture.WHITE)
     this.entranceOverlay.width = this.dimensions.width
@@ -208,6 +216,7 @@ export default {
     this.$watch('dimensions', ({ width, height }) => {
       viewport.resize(width, height)
       viewport.snap(0, 0, { time: 0 })
+      app.renderer.resize(width, height)
     })
 
     this.init()
@@ -216,11 +225,6 @@ export default {
     this.app.destroy(true, { children: true })
   }
   , watch: {
-    dimensions(){
-      let w = this.dimensions.width
-      let h = this.dimensions.height
-      this.app.renderer.resize(w, h)
-    }
   }
   , mounted(){
     this.$el.appendChild(this.app.view)
@@ -442,7 +446,7 @@ export default {
       let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
       offscreenIndicator.zIndex = 10
-      this.stage.addChild(offscreenIndicator)
+      this.bubbleLayer.addChild(offscreenIndicator)
 
       const handleZoom = () => {
         let y = movingGraphic.position.y
