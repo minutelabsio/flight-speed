@@ -186,13 +186,23 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     })
 
+    this.shadowFilter = new DropShadowFilter({
+      shadowOnly: false
+      , rotation: 90
+      , distance: 550
+      , blur: 2
+      , quality: 5
+      , alpha: 0.3
+    })
+
+    this.$on('zoom', (scale) => {
+      this.shadowFilter.distance = 500 * scale
+    })
+
     this.creaturesLayer = new PIXI.Container()
     this.creaturesLayer.sortableChildren = true
     this.creaturesLayer.zIndex = 10
-    this.creaturesLayer.filters = [new DropShadowFilter({
-      shadowOnly: false
-      , quality: 9
-    })]
+    this.creaturesLayer.filters = [this.shadowFilter]
     this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
@@ -388,7 +398,7 @@ export default {
       track.lineStyle(2, 0x888888, 1)
       track.moveTo(0, 0)
       track.lineTo(200000, 0)
-      track.alpha = 0.4
+      track.alpha = 0.1
       // track.beginFill(0xFF9933)
       // track.drawRoundedRect(0, 0, 20000, 2, 0)
       // track.endFill()
@@ -401,7 +411,7 @@ export default {
       track.on('pointerover', () => {
         track.alpha = 1
       }).on('pointerout', () => {
-        track.alpha = 0.4
+        track.alpha = 0.1
       }).on('pointerdown', (e) => {
         // if mousebutton is used and it's not left btn, this will be non-zero
         if ( e.data.originalEvent.button ){ return }
