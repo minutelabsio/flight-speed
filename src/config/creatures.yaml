@@ -19,3 +19,73 @@
   position:
     x: 0
     y: 1000
+
+- wandering-albatross:
+  name: 'Wandering albatross'
+  image: 'NA'
+  speed: 19.22 
+  size: 0.62
+  mass: 87
+  position:
+    x: 0
+    y: 1000
+    
+- bald-eagle:
+  name: 'Bald eagle'
+  image: 'NA'
+  speed: 12.76
+  size: 0.76
+  mass: 47
+  position:
+    x: 0
+    y: 1000
+    
+- canada-goose:
+  name: 'Canada goose'
+  image: 'NA'
+  speed: 23.15
+  size: 0.28
+  mass: 57
+  position:
+    x: 0
+    y: 1000
+    
+- boeing-747:
+  name: 'Boeing 747-400'
+  image: 'NA'
+  speed: 140.84
+  size: 525
+  mass: 3950000
+  position:
+    x: 0
+    y: 1000
+ 
+ - blue-jay:
+  name: 'Blue jay'
+  image: 'NA'
+  speed: 9.88
+  size: 0.024
+  mass: 0.89
+  position:
+    x: 0
+    y: 1000
+
+ - swallowtail-butterfly:
+  name: 'Swallowtail butterfly'
+  image: 'NA'
+  speed: 2.29
+  size: 0.003
+  mass: 0.006
+  position:
+    x: 0
+    y: 1000
+    
+- smaug:
+  name: 'Smaug'
+  image: 'NA'
+  speed: 8.6
+  size: 3175.44
+  mass: 903393.81
+  position:
+    x: 0
+    y: 1000
