@@ -25,13 +25,13 @@
 - wandering-albatross:
   name: 'Wandering albatross'
   image: 'nyan-jackson.gif'
-  speed: 19.22 
+  speed: 19.22
   size: 0.62
   mass: 87
   position:
     x: 0
-    y: 1000
-    
+    y: -1000
+
 - bald-eagle:
   name: 'Bald eagle'
   image: 'nyan-jackson.gif'
@@ -40,18 +40,18 @@
   mass: 47
   position:
     x: 0
-    y: 1000
-    
+    y: 3000
+
 - canada-goose:
   name: 'Canada goose'
-  image: 'NA'
+  image: 'nyan-jackson.gif'
   speed: 23.15
   size: 0.28
   mass: 57
   position:
     x: 0
-    y: 1000
-    
+    y: -3000
+
 - boeing-747:
   name: 'Boeing 747-400'
   image: 'nyan-jackson.gif'
@@ -60,9 +60,9 @@
   mass: 3950000
   position:
     x: 0
-    y: 1000
- 
- - blue-jay:
+    y: 5000
+
+- blue-jay:
   name: 'Blue jay'
   image: 'nyan-jackson.gif'
   speed: 9.88
@@ -70,9 +70,9 @@
   mass: 0.89
   position:
     x: 0
-    y: 1000
+    y: -1000
 
- - swallowtail-butterfly:
+- swallowtail-butterfly:
   name: 'Swallowtail butterfly'
   image: 'nyan-jackson.gif'
   speed: 2.29
@@ -80,8 +80,8 @@
   mass: 0.006
   position:
     x: 0
-    y: 1000
-    
+    y: 500
+
 - smaug:
   name: 'Smaug'
   image: 'nyan-jackson.gif'
@@ -90,4 +90,4 @@
   mass: 903393.81
   position:
     x: 0
-    y: 1000
+    y: 30000

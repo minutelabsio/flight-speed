@@ -252,26 +252,9 @@ export default {
           , x: this.viewport.left / 4
           , y: c.position.y
           , speed: c.speed
-          , scale: c.size
+          , scale: Math.sqrt(c.size)
         })
       })
-
-      let scale = 0.01
-
-      function getScale( speed ){
-        return speed * speed * scale
-      }
-
-      for ( let i = 2; i < 6; i++ ){
-        let speed = 4 * i + 4
-        this.createFlyer({
-          resource: 'nyan'+i
-          , x: this.viewport.left / 4
-          , y: i * 600 * getScale(speed) * (i % 2 ? 1 : -1)
-          , speed
-          , scale: getScale(speed)
-        })
-      }
 
       this.initBg()
       this.initLengthScale()
