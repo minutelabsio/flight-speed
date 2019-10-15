@@ -180,7 +180,7 @@ export default {
     // viewport.snap(0, 0, { time: 0 })
     viewport.ensureVisible(-this.dimensions.width/2, -this.dimensions.height/2, this.dimensions.width, this.dimensions.height)
     viewport.sortableChildren = true
-    viewport.zIndex = 10
+    viewport.zIndex = 8
 
     viewport.on('zoomed', () => {
       this.$emit('zoom', this.viewport.scaled)
@@ -201,7 +201,7 @@ export default {
 
     this.creaturesLayer = new PIXI.Container()
     this.creaturesLayer.sortableChildren = true
-    this.creaturesLayer.zIndex = 10
+    this.creaturesLayer.zIndex = 8
     this.creaturesLayer.filters = [this.shadowFilter]
     this.viewport.addChild(this.creaturesLayer)
 
