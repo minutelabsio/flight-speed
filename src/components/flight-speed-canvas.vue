@@ -704,7 +704,7 @@ export default {
       let hh = Math.abs(creature.movingGraphic.position.y)
       let zoom = vp.screenHeight / (2 * hh + creature.movingGraphic.height)
 
-      animateZoomTo(zoom)
+      this.animateZoomTo(zoom)
     }
     , animateZoomTo( zoom, duration = 1000, step ){
       const vp = this.viewport
