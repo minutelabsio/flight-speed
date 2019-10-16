@@ -1,6 +1,7 @@
 <script>
 import Promise from 'bluebird'
 import _debounce from 'lodash/debounce'
+import _throttle from 'lodash/throttle'
 import { tween } from 'shifty'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
@@ -169,7 +170,7 @@ export default {
       .wheel({ center, smooth: 20 })
       .clampZoom({
         minHeight: 100
-        , maxHeight: 100000
+        , maxHeight: 300000
       })
       // .clamp({
       //   top: -100000
@@ -258,6 +259,7 @@ export default {
 
       this.initBg()
       this.initLengthScale()
+      this.initLaunchers()
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
@@ -358,6 +360,32 @@ export default {
 
       this.stage.addChild(tile)
     }
+    , initLaunchers(){
+      this.launchersLayer = new PIXI.Container()
+      let bg = new PIXI.Sprite(PIXI.Texture.WHITE)
+      bg.width = 380
+      bg.height = 120
+      bg.alpha = 0.3
+      this.launchersLayer.addChild(bg)
+      this.launchersLayer.zIndex = 12
+      this.stage.addChild(this.launchersLayer)
+
+      this.createLaunchable({
+        ...Creatures[0]
+        , resource: Creatures[0].image
+        , scale: 0.15
+        , x: 100
+        , y: 60
+      })
+
+      this.createLaunchable({
+        ...Creatures[5]
+        , resource: Creatures[5].image
+        , scale: 0.15
+        , x: 260
+        , y: 55
+      })
+    }
     , createFlyer( cfg ){
 
       const viewport = this.viewport
@@ -368,7 +396,6 @@ export default {
       // image.rotation = Math.PI / 2
 
       movingGraphic.position.set(cfg.x || this.viewport.right + SCREEN_MARGIN, 0)
-      movingGraphic.moveSpeed = cfg.speed
       movingGraphic.zIndex = Math.floor(1 / cfg.scale)
       // movingGraphic.filters = [motionBlur]
       movingGraphic.addChild(image)
@@ -380,15 +407,15 @@ export default {
       track.interactive = true
       track.lineStyle(2, 0x888888, 1)
       track.moveTo(0, 0)
-      track.lineTo(200000, 0)
+      track.lineTo(400000, 0)
       track.alpha = 0.1
       // track.beginFill(0xFF9933)
       // track.drawRoundedRect(0, 0, 20000, 2, 0)
       // track.endFill()
-      track.x = -100000
+      track.x = -200000
       track.y = 0
       track.zIndex = -1
-      track.hitArea = new PIXI.Rectangle(0, -20, 200000, 40)
+      track.hitArea = new PIXI.Rectangle(0, -20, 400000, 40)
       track.cursor = 'grab'
 
       track.on('pointerover', () => {
@@ -463,11 +490,39 @@ export default {
         offscreenIndicator.position.x = viewport.toScreen(x, 0).x
       }
 
+      function show(){
+        movingGraphic.visible = true
+        track.visible = true
+        offscreenIndicator.visible = true
+      }
+
+      function hide(){
+        movingGraphic.visible = false
+        track.visible = false
+        offscreenIndicator.visible = false
+      }
+
+      const destroy = () => {
+        let idx = this.creatures.indexOf(creature)
+        if ( idx > -1 ){
+          this.creatures.splice(idx, 1)
+        }
+
+        this.bubbleLayer.removeChild(offscreenIndicator)
+        this.trackLayer.removeChild(track)
+        this.creaturesLayer.removeChild(movingGraphic)
+      }
+
       const creature = {
         movingGraphic
         , track
+        , speed: cfg.speed
+        , paused: false
         , setXPosition
         , setYPosition
+        , show
+        , hide
+        , destroy
       }
 
       const handleZoom = () => {
@@ -497,7 +552,110 @@ export default {
       })
 
       setYPosition( cfg.y )
+      handleZoom()
       this.creatures.push(creature)
+      return creature
+    }
+    , createLaunchable( cfg = {} ){
+      const viewport = this.viewport
+      const throttleTime = 2
+      const handle = new PIXI.Graphics()
+      handle.interactive = true
+      handle.cursor = 'grab'
+      handle.position.set(cfg.x, cfg.y)
+      const image = resourceToGraphics(cfg.resource, cfg.scale)
+      handle.addChild(image)
+
+      let creature
+      let screenPos
+      let lastPos
+      let lastTime = 0
+      let speed
+      const grab = e => {
+        if ( e.data.originalEvent.button ){ return }
+        e.stopPropagation()
+        handle.data = e.data
+        handle.cursor = 'grabbing'
+        handle.dragging = true
+        creature = this.createFlyer({ ...cfg, scale: Math.sqrt(cfg.size) })
+        creature.paused = true
+        screenPos = handle.data.getLocalPosition(handle.parent)
+        lastPos = viewport.toWorld(screenPos)
+
+        let zoom = cfg.scale / Math.sqrt(cfg.size)
+        this.animateZoomTo(zoom, 200, () => {
+          let pos = viewport.toWorld(screenPos)
+          creature.setXPosition(pos.x)
+          creature.setYPosition(pos.y)
+          creature.paused = true
+        })
+      }
+
+      const move = _throttle(e => {
+        if ( !handle.dragging ){ return }
+        screenPos = handle.data.getLocalPosition(handle.parent)
+        const pos = viewport.toWorld(screenPos)
+        creature.setXPosition(pos.x)
+        creature.setYPosition(pos.y)
+
+        const time = performance.now()
+        let dt = Math.max(time - lastTime, throttleTime)
+
+        speed = Math.max((pos.x - lastPos.x) / dt, 0)
+
+        lastPos = pos
+        lastTime = time
+      }, throttleTime)
+
+      const fly = (creature, speed) => {
+        tween({
+          from: { speed }
+          , to: { speed: cfg.speed }
+          , delay: 0
+          , duration: 3000
+          , easing: 'easeOutQuad'
+          , step: state => {
+            creature.speed = state.speed
+          }
+        })
+      }
+
+      const fall = creature => {
+        creature.movingGraphic.zIndex = 0
+        tween({
+          from: { speed, scale: creature.movingGraphic.scale.x }
+          , to: { speed: 0, scale: 0 }
+          , delay: 0
+          , duration: 3000
+          , easing: 'easeOutQuad'
+          , step: state => {
+            creature.speed = state.speed
+            creature.movingGraphic.scale.set(state.scale, state.scale)
+          }
+        }).then(() => {
+          creature.destroy()
+        })
+      }
+
+      const release = e => {
+        handle.data = null
+        handle.cursor = 'grab'
+        handle.dragging = false
+        creature.paused = false
+
+        if ( speed >= cfg.speed ){
+          fly(creature, speed)
+        } else {
+          fall(creature)
+        }
+      }
+
+      handle.on('pointerdown', grab)
+        .on('pointermove', move)
+        .on('pointerup', release)
+        .on('pointerupoutside', release)
+
+      this.launchersLayer.addChild(handle)
     }
     , draw(dt){
       if ( this.paused ){ return }
@@ -513,7 +671,7 @@ export default {
     }
     , moveWrap(creature, dt){
       let obj = creature.movingGraphic
-      let v = obj.moveSpeed
+      let v = creature.speed
       let hw = 0.5 * obj.width
       let { x } = obj.position
 
@@ -546,14 +704,21 @@ export default {
       let hh = Math.abs(creature.movingGraphic.position.y)
       let zoom = vp.screenHeight / (2 * hh + creature.movingGraphic.height)
 
+      animateZoomTo(zoom)
+    }
+    , animateZoomTo( zoom, duration = 1000, step ){
+      const vp = this.viewport
       tween({
         from: { zoom: vp.scaled }
         , to: { zoom }
         , delay: 0
-        , duration: 1000
+        , duration
         , easing: 'easeOutQuad'
         , step: state => {
           this.zoom( state.zoom )
+          if ( step ){
+            step()
+          }
         }
       })
     }

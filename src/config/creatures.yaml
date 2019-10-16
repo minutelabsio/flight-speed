@@ -60,7 +60,7 @@
   mass: 3950000
   position:
     x: 0
-    y: 5000
+    y: -20000
 
 - blue-jay:
   name: 'Blue jay'
