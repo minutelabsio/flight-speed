@@ -1,5 +1,6 @@
 <script>
 import Promise from 'bluebird'
+import WebFont from 'webfontloader'
 import _debounce from 'lodash/debounce'
 import _throttle from 'lodash/throttle'
 import { tween } from 'shifty'
@@ -247,6 +248,11 @@ export default {
   , methods: {
     async init(){
       await loadSprites()
+      await WebFont.load({
+        google: {
+          families: ['latin-modern-mono', 'PT Sans']
+        }
+      })
 
       this.creatures = []
 
@@ -257,6 +263,7 @@ export default {
           , y: c.position.y
           , speed: c.speed
           , scale: Math.sqrt(c.size)
+          , name: c.name
         })
       })
 
@@ -476,6 +483,18 @@ export default {
       trail.x = -image.width / 2
       movingGraphic.addChild(trail)
 
+      let title = new PIXI.Text(cfg.name, {
+        fontFamily: 'latin-modern-mono'
+        , fontSize: 64
+        , fill: 0xcccccc
+        , align: 'center'
+      })
+      title.scale.set(cfg.scale)
+      title.anchor.set(0.5, 0)
+      // title.position.set(-(1.3) * image.width / 2, 0)
+
+      this.trackLayer.addChild(title)
+
       let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
       offscreenIndicator.zIndex = 10
@@ -486,6 +505,7 @@ export default {
       function setYPosition( y ){
         movingGraphic.position.y = y
         track.position.y = y
+        title.position.y = y
       }
 
       function setXPosition( x ){
