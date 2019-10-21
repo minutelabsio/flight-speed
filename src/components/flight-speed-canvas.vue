@@ -189,8 +189,8 @@ export default {
 
     this.shadowFilter = new DropShadowFilter({
       shadowOnly: false
-      , rotation: 90
-      , distance: 550
+      , rotation: 90.1
+      , distance: 0
       , blur: 2
       , quality: 5
       , alpha: 0.3
@@ -546,8 +546,10 @@ export default {
       offscreenIndicator.on('click', () => {
         this.zoomToCreature(creature)
       }).on('pointerover', () => {
+        if ( creature.grabbing ){ return }
         creature.paused = true
       }).on('pointerout', () => {
+        if ( creature.grabbing ){ return }
         creature.paused = false
       })
 
@@ -558,7 +560,7 @@ export default {
     }
     , createLaunchable( cfg = {} ){
       const viewport = this.viewport
-      const throttleTime = 2
+      const throttleTime = 1
       const handle = new PIXI.Graphics()
       handle.interactive = true
       handle.cursor = 'grab'
@@ -579,19 +581,20 @@ export default {
         handle.dragging = true
         creature = this.createFlyer({ ...cfg, scale: Math.sqrt(cfg.size) })
         creature.paused = true
+        creature.grabbing = true
         screenPos = handle.data.getLocalPosition(handle.parent)
         lastPos = viewport.toWorld(screenPos)
 
         let zoom = cfg.scale / Math.sqrt(cfg.size)
         this.animateZoomTo(zoom, 200, () => {
+          if ( !creature.grabbing ){ return }
           let pos = viewport.toWorld(screenPos)
           creature.setXPosition(pos.x)
           creature.setYPosition(pos.y)
-          creature.paused = true
         })
       }
 
-      const move = _throttle(e => {
+      const move = e => {
         if ( !handle.dragging ){ return }
         screenPos = handle.data.getLocalPosition(handle.parent)
         const pos = viewport.toWorld(screenPos)
@@ -605,7 +608,7 @@ export default {
 
         lastPos = pos
         lastTime = time
-      }, throttleTime)
+      }
 
       const fly = (creature, speed) => {
         tween({
@@ -642,6 +645,7 @@ export default {
         handle.cursor = 'grab'
         handle.dragging = false
         creature.paused = false
+        creature.grabbing = false
 
         if ( speed >= cfg.speed ){
           fly(creature, speed)
