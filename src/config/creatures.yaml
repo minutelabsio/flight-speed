@@ -5,8 +5,8 @@
 - classic-nyan: # this is the id
   name: 'The OG Nyan Cat' # display name
   image: 'nyan.png' # no path information, just the image name
-  speed: 4 # Use whatever units you want, just use the same across all
-  size: 0.16 # Again, whatever units you want. eg: torso length / wingspan
+  speed: 1 # Use whatever units you want, just use the same across all
+  size: 1 # Again, whatever units you want. eg: torso length / wingspan
   mass: 1 # don't know if we want this for extra information
   position:
     x: 0 # ignored for now

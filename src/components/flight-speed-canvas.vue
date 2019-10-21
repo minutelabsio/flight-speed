@@ -15,6 +15,7 @@ const svgResources = {
 }
 
 const SCREEN_MARGIN = 50
+const GLOBAL_IMAGE_SCALE = 1000
 
 // function ignoreUselessErrors(error){
 //   if ( error.message.match('Resource named') ){
@@ -36,6 +37,7 @@ function resizeHooks(self){
 }
 
 function lengthScale( maxWidth = 400 ){
+  const pixelsToMeters = 2000 / maxWidth
   let unitWidth = maxWidth / 2
   let graphics = new PIXI.Graphics()
   let text = new PIXI.Text('0', {
@@ -53,6 +55,7 @@ function lengthScale( maxWidth = 400 ){
   }
 
   function setScale( s ){
+    s *= pixelsToMeters
     let units = Math.pow(10, Math.ceil(Math.log10(1/s)))
     let targetWidth = s * unitWidth
 
@@ -86,7 +89,7 @@ function resourceToGraphics( name, scale = 1 ){
     image = new PIXI.Sprite(resource)
   }
 
-  let s = scale * 1000 / image.texture.width
+  let s = scale * GLOBAL_IMAGE_SCALE / image.texture.width
   image.scale.set(s, s)
 
   image.anchor.set(0.5, 0.5)
@@ -378,13 +381,13 @@ export default {
         , y: 60
       })
 
-      this.createLaunchable({
-        ...Creatures[5]
-        , resource: Creatures[5].image
-        , scale: 0.15
-        , x: 260
-        , y: 55
-      })
+      // this.createLaunchable({
+      //   ...Creatures[5]
+      //   , resource: Creatures[5].image
+      //   , scale: 0.15
+      //   , x: 260
+      //   , y: 55
+      // })
     }
     , createFlyer( cfg ){
 
@@ -405,10 +408,10 @@ export default {
       // track
       let track = new PIXI.Graphics()
       track.interactive = true
-      track.lineStyle(2, 0x888888, 1)
+      track.lineStyle(2, 0xffffff, 1)
       track.moveTo(0, 0)
       track.lineTo(400000, 0)
-      track.alpha = 0.1
+      track.alpha = 0.05
       // track.beginFill(0xFF9933)
       // track.drawRoundedRect(0, 0, 20000, 2, 0)
       // track.endFill()
@@ -421,7 +424,7 @@ export default {
       track.on('pointerover', () => {
         track.alpha = 1
       }).on('pointerout', () => {
-        track.alpha = 0.1
+        track.alpha = 0.05
       }).on('pointerdown', (e) => {
         // if mousebutton is used and it's not left btn, this will be non-zero
         if ( e.data.originalEvent.button ){ return }
@@ -679,7 +682,7 @@ export default {
       let hw = 0.5 * obj.width
       let { x } = obj.position
 
-      x += v * dt
+      x += v * dt * GLOBAL_IMAGE_SCALE / 100
 
       if ( v > 0 ){
         if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
