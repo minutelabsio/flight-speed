@@ -651,7 +651,7 @@ export default {
         let isOffscreen = isAbove || isBelow
 
         if ( isOffscreen !== offscreenIndicator.visible ){
-          creature.paused = false
+          creature.paused = creature.grabbing ? true : false
           offscreenIndicator.visible = isOffscreen
           offscreenIndicator.getChildByName('bubble').rotation = isAbove ? Math.PI : 0
           offscreenIndicator.position.y = isAbove ? 45 : this.dimensions.height - 45
