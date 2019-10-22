@@ -6,7 +6,7 @@
 import Promise from 'bluebird'
 import WebFont from 'webfontloader'
 import _debounce from 'lodash/debounce'
-import _throttle from 'lodash/throttle'
+// import _throttle from 'lodash/throttle'
 import { tween } from 'shifty'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
@@ -712,7 +712,7 @@ export default {
         })
       }
 
-      const move = e => {
+      const move = () => {
         if ( !handle.dragging ){ return }
         screenPos = handle.data.getLocalPosition(handle.parent)
         const pos = viewport.toWorld(screenPos)
@@ -759,7 +759,7 @@ export default {
         })
       }
 
-      const release = e => {
+      const release = () => {
         handle.data = null
         handle.cursor = 'grab'
         handle.dragging = false
