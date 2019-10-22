@@ -26,6 +26,22 @@ const GLOBAL_IMAGE_SCALE = 1000
 //   return Promise.reject(error)
 // }
 
+function loadFonts(){
+  return new Promise((resolve, reject) => {
+    WebFont.load({
+      google: {
+        families: ['latin-modern-mono', 'Source Sans Pro']
+      }
+      , active(){
+        resolve()
+      }
+      , inactive(){
+        reject()
+      }
+    })
+  })
+}
+
 function resizeHooks(self){
   const resize = _debounce(function(){
     self.$emit('resize')
@@ -43,7 +59,7 @@ function lengthScale( maxWidth = 400 ){
   let graphics = new PIXI.Graphics()
   let text = new PIXI.Text('0', {
     fontFamily: 'latin-modern-mono'
-    , fontSize: 14
+    , fontSize: 18
     , fill: 0xffffff
     , align: 'center'
   })
@@ -52,7 +68,8 @@ function lengthScale( maxWidth = 400 ){
 
   function formatUnits( d ){
     let v = unit(d, 'm')
-    return v.toString()
+    let precision = Math.floor(d * 10) === 1 ? 1 : 0
+    return v.format({ notation: 'fixed', precision })
   }
 
   function setScale( s ){
@@ -248,11 +265,7 @@ export default {
   , methods: {
     async init(){
       await loadSprites()
-      await WebFont.load({
-        google: {
-          families: ['latin-modern-mono', 'PT Sans']
-        }
-      })
+      await loadFonts()
 
       this.creatures = []
 
@@ -457,14 +470,6 @@ export default {
         track.dragging = false
       }
 
-      this.$on('zoom', scale => {
-        // unzoom the track
-        const s = 1 / scale
-        track.scale.set(1, s)
-        trail.scale.set(1, s)
-        // motionBlur.velocity.x = cfg.speed * scale * 2
-      })
-
       this.trackLayer.addChild(track)
 
       // trail
@@ -485,15 +490,24 @@ export default {
 
       let title = new PIXI.Text(cfg.name, {
         fontFamily: 'latin-modern-mono'
-        , fontSize: 64
+        , fontSize: 12
         , fill: 0xcccccc
         , align: 'center'
       })
-      title.scale.set(cfg.scale)
-      title.anchor.set(0.5, 0)
+      // title.scale.set(cfg.scale)
+      title.anchor.set(0.5, 1)
       // title.position.set(-(1.3) * image.width / 2, 0)
 
       this.trackLayer.addChild(title)
+
+      this.$on('zoom', scale => {
+        // unzoom the track
+        const s = 1 / scale
+        track.scale.set(1, s)
+        trail.scale.set(1, s)
+        title.scale.set(s)
+        // motionBlur.velocity.x = cfg.speed * scale * 2
+      })
 
       let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
