@@ -12,6 +12,7 @@ const SPRITES = {
   , 'nyan4': require('@/assets/creatures/nyan-coin.gif')
   , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
   , 'cityTile': require('@/assets/bg.jpg')
+  , '747-test.png': require('@/assets/creatures/747-test.png')
 }
 
 let LOAD_SPRITES_PROMISE = null

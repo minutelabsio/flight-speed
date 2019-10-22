@@ -1,3 +1,7 @@
+<template lang="pug">
+.wrap
+  .canvas(ref="canvas")
+</template>
 <script>
 import Promise from 'bluebird'
 import WebFont from 'webfontloader'
@@ -15,7 +19,7 @@ const svgResources = {
   'bee': require('@/assets/bee.svg')
 }
 
-const SCREEN_MARGIN = 50
+const SCREEN_MARGIN = 200
 const GLOBAL_IMAGE_SCALE = 1000
 
 // function ignoreUselessErrors(error){
@@ -94,6 +98,29 @@ function lengthScale( maxWidth = 400 ){
     , graphics
   }
 }
+
+const makeTrail = (function(){
+  const canvas = document.createElement('canvas')
+  canvas.height = 2
+
+  const ctx = canvas.getContext('2d')
+
+  return trailWidth => {
+    // trail
+    // let trailWidth = 500 * cfg.speed
+    ctx.canvas.width = trailWidth
+    ctx.clearRect(0, 0, trailWidth, 2)
+    let gradient = ctx.createLinearGradient(0, 0, trailWidth, 0)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0)')
+    gradient.addColorStop(1, '#ffffff')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, trailWidth, 2)
+    let trail = new PIXI.Sprite(PIXI.Texture.from(canvas.toDataURL()))
+    trail.anchor.set(1, 0.5)
+
+    return trail
+  }
+})()
 
 function resourceToGraphics( name, scale = 1 ){
   let image
@@ -234,6 +261,10 @@ export default {
     this.stage.sortableChildren = true
     this.stage.addChild(this.viewport)
 
+    this.labelLayer = new PIXI.Container()
+    this.labelLayer.zIndex = 0
+    this.stage.addChild(this.labelLayer)
+
     this.bubbleLayer = new PIXI.Container()
     this.bubbleLayer.zIndex = 11
     this.stage.addChild(this.bubbleLayer)
@@ -260,7 +291,7 @@ export default {
   , watch: {
   }
   , mounted(){
-    this.$el.appendChild(this.app.view)
+    this.$refs.canvas.appendChild(this.app.view)
   }
   , methods: {
     async init(){
@@ -396,7 +427,7 @@ export default {
       this.createLaunchable({
         ...Creatures[0]
         , resource: Creatures[0].image
-        , scale: 0.15
+        , scale: 0.10
         , x: 100
         , y: 60
       })
@@ -442,7 +473,7 @@ export default {
       track.cursor = 'grab'
 
       track.on('pointerover', () => {
-        track.alpha = 1
+        track.alpha = 0.4
       }).on('pointerout', () => {
         track.alpha = 0.05
       }).on('pointerdown', (e) => {
@@ -473,41 +504,51 @@ export default {
       this.trackLayer.addChild(track)
 
       // trail
-      let trailWidth = 100 * cfg.speed
-      let canvas = document.createElement('canvas')
-      canvas.width = trailWidth
-      canvas.height = 2
-      let ctx = canvas.getContext('2d')
-      let gradient = ctx.createLinearGradient(0, 0, trailWidth, 0)
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0)')
-      gradient.addColorStop(1, '#ffff00')
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, trailWidth, 2)
-      let trail = new PIXI.Sprite(PIXI.Texture.from(canvas))
-      trail.anchor.set(1, 0.5)
-      trail.x = -image.width / 2
+      const trail = makeTrail(500 * cfg.speed)
+      trail.name = 'trail'
+      trail.position.x = -image.width / 2
       movingGraphic.addChild(trail)
+
+      const trailClone = makeTrail(500 * cfg.speed)
+      trailClone.name = 'trailClone'
+      trailClone.position.set(viewport.worldWidth, 0)
+      movingGraphic.addChild(trailClone)
 
       let title = new PIXI.Text(cfg.name, {
         fontFamily: 'latin-modern-mono'
-        , fontSize: 12
-        , fill: 0xcccccc
+        , fontSize: 14
+        , fill: 0xffffff
         , align: 'center'
       })
+      title.alpha = 0.9
+      title.resolution = 2
       // title.scale.set(cfg.scale)
       title.anchor.set(0.5, 1)
       // title.position.set(-(1.3) * image.width / 2, 0)
+      this.labelLayer.addChild(title)
 
-      this.trackLayer.addChild(title)
+      this.$watch('dimensions', () => {
+        title.position.x = this.dimensions.width / 2
+      })
 
-      this.$on('zoom', scale => {
+      let oldViewportRight = viewport.right
+      const fixScale = scale => {
         // unzoom the track
         const s = 1 / scale
         track.scale.set(1, s)
         trail.scale.set(1, s)
-        title.scale.set(s)
+        trailClone.scale.set(1, s)
+        title.position.set(this.dimensions.width / 2, viewport.toScreen(movingGraphic.position).y)
         // motionBlur.velocity.x = cfg.speed * scale * 2
-      })
+
+        // account for zoom out that causes trail clone edges to be visible
+        // instead push them to the right of the screen
+        if ( viewport.right > oldViewportRight ){
+          trailClone.position.x += viewport.right - oldViewportRight
+        }
+        oldViewportRight = viewport.right
+      }
+      this.$on('zoom', fixScale)
 
       let offscreenIndicator = makeOffscreenThumb(cfg.resource)
       offscreenIndicator.position.set(100, 40)
@@ -519,7 +560,7 @@ export default {
       function setYPosition( y ){
         movingGraphic.position.y = y
         track.position.y = y
-        title.position.y = y
+        title.position.y = viewport.toScreen(movingGraphic.position).y
       }
 
       function setXPosition( x ){
@@ -547,7 +588,46 @@ export default {
 
         this.bubbleLayer.removeChild(offscreenIndicator)
         this.trackLayer.removeChild(track)
+        this.labelLayer.removeChild(title)
         this.creaturesLayer.removeChild(movingGraphic)
+      }
+
+      function moveWrap(dt){
+        let obj = movingGraphic
+        let v = this.speed
+        let hw = 0.5 * image.width
+        let { x } = obj.position
+        let margin = SCREEN_MARGIN / viewport.scaled
+
+        x += v * dt * GLOBAL_IMAGE_SCALE / 100
+
+        if ( v > 0 ){
+          if ( (x - hw - margin) > viewport.right ){
+            let diff = x
+            x = viewport.left - hw
+            diff -= x
+            trailClone.position.x = diff + trail.position.x
+          }
+
+          if ( (x + hw + margin) < viewport.left ){
+            x = viewport.left - hw
+          }
+        }
+
+        // if ( v < 0 ){
+        //   if ( (x + hw + margin) < viewport.left ){
+        //     let diff = x
+        //     x = viewport.right + hw
+        //     diff -= x
+        //     trailClone.position.x = diff + trail.position.x
+        //   }
+        //
+        //   if ( (x - hw - margin) > viewport.right ){
+        //     x = viewport.left - hw
+        //   }
+        // }
+
+        setXPosition(x)
       }
 
       const creature = {
@@ -557,6 +637,7 @@ export default {
         , paused: false
         , setXPosition
         , setYPosition
+        , moveWrap
         , show
         , hide
         , destroy
@@ -591,13 +672,13 @@ export default {
       })
 
       setYPosition( cfg.y )
+      fixScale(viewport.scaled)
       handleZoom()
       this.creatures.push(creature)
       return creature
     }
     , createLaunchable( cfg = {} ){
       const viewport = this.viewport
-      const throttleTime = 1
       const handle = new PIXI.Graphics()
       handle.interactive = true
       handle.cursor = 'grab'
@@ -639,7 +720,7 @@ export default {
         creature.setYPosition(pos.y)
 
         const time = performance.now()
-        let dt = Math.max(time - lastTime, throttleTime)
+        let dt = Math.max(time - lastTime, 10)
 
         speed = Math.max((pos.x - lastPos.x) / dt, 0)
 
@@ -662,6 +743,7 @@ export default {
 
       const fall = creature => {
         creature.movingGraphic.zIndex = 0
+        creature.movingGraphic.getChildByName('trailClone').visible = false
         tween({
           from: { speed, scale: creature.movingGraphic.scale.x }
           , to: { speed: 0, scale: 0 }
@@ -706,39 +788,9 @@ export default {
       for (let i = 0, l = this.creatures.length; i < l; i++){
         let creature = this.creatures[i]
         if ( !creature.paused ){
-          this.moveWrap(creature, dt)
+          creature.moveWrap(dt)
         }
       }
-    }
-    , moveWrap(creature, dt){
-      let obj = creature.movingGraphic
-      let v = creature.speed
-      let hw = 0.5 * obj.width
-      let { x } = obj.position
-
-      x += v * dt * GLOBAL_IMAGE_SCALE / 100
-
-      if ( v > 0 ){
-        if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
-          x = this.viewport.left - hw
-        }
-
-        if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
-          x = this.viewport.left - hw
-        }
-      }
-
-      if ( v < 0 ){
-        if ( (x + hw + SCREEN_MARGIN) < this.viewport.left ){
-          x = this.viewport.right + hw
-        }
-
-        if ( (x - hw - SCREEN_MARGIN) > this.viewport.right ){
-          x = this.viewport.left - hw
-        }
-      }
-
-      creature.setXPosition(x)
     }
     , zoomToCreature(creature){
       const vp = this.viewport
@@ -767,9 +819,6 @@ export default {
       this.viewport.setZoom( scale )
       this.$emit('zoom', scale)
     }
-  }
-  , render(h){
-    return h('div')
   }
 }
 </script>

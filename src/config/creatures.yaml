@@ -14,7 +14,7 @@
 
 # - jackson-nyan:
 #   name: 'Moonwalking nyan'
-#   image: 'nyan-jackson.gif'
+#   image: '747-test.png'
 #   speed: 8
 #   size: 0.64
 #   mass: 2
@@ -24,7 +24,7 @@
 
 - wandering-albatross:
   name: 'Wandering albatross'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 19.22
   size: 0.62
   mass: 87
@@ -34,7 +34,7 @@
 
 - bald-eagle:
   name: 'Bald eagle'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 12.76
   size: 0.76
   mass: 47
@@ -44,7 +44,7 @@
 
 - canada-goose:
   name: 'Canada goose'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 23.15
   size: 0.28
   mass: 57
@@ -54,7 +54,7 @@
 
 - boeing-747:
   name: 'Boeing 747-400'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 140.84
   size: 525
   mass: 3950000
@@ -64,7 +64,7 @@
 
 - blue-jay:
   name: 'Blue jay'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 9.88
   size: 0.024
   mass: 0.89
@@ -74,7 +74,7 @@
 
 - swallowtail-butterfly:
   name: 'Swallowtail butterfly'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 2.29
   size: 0.003
   mass: 0.006
@@ -84,7 +84,7 @@
 
 - smaug:
   name: 'Smaug'
-  image: 'nyan-jackson.gif'
+  image: '747-test.png'
   speed: 8.6
   size: 3175.44
   mass: 903393.81
