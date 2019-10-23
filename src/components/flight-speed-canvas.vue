@@ -1,12 +1,15 @@
 <template lang="pug">
 .wrap
+  .launchable-selector
+    b-select(v-model="selectedLaunchable")
+      option(v-for="(creature, key) in creatureList", :value="key") {{ creature.name }}
   .canvas(ref="canvas")
 </template>
 <script>
 import Promise from 'bluebird'
 import WebFont from 'webfontloader'
 import _debounce from 'lodash/debounce'
-// import _throttle from 'lodash/throttle'
+import _throttle from 'lodash/throttle'
 import { tween } from 'shifty'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
@@ -177,6 +180,9 @@ export default {
       width: window.innerWidth
       , height: window.innerHeight
     }
+    , selectedLaunchable: 0
+    , creatureList: Creatures
+    , launchableSpeed: 0
   })
   , created(){
 
@@ -223,7 +229,7 @@ export default {
       .wheel({ center, smooth: 20 })
       .clampZoom({
         minHeight: 100
-        , maxHeight: 300000
+        , maxHeight: 800000
       })
       // .clamp({
       //   top: -100000
@@ -295,6 +301,11 @@ export default {
   }
   , watch: {
   }
+  , computed: {
+    launchableTargetSpeed(){
+      return Creatures[this.selectedLaunchable].speed
+    }
+  }
   , mounted(){
     this.$refs.canvas.appendChild(this.app.view)
   }
@@ -319,6 +330,7 @@ export default {
       this.initBg()
       this.initLengthScale()
       this.initLaunchers()
+      this.initSpeedMeter()
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
@@ -429,21 +441,60 @@ export default {
       this.launchersLayer.zIndex = 12
       this.stage.addChild(this.launchersLayer)
 
-      this.createLaunchable({
-        ...Creatures[0]
-        , resource: Creatures[0].image
-        , scale: 0.10
-        , x: 100
-        , y: 60
+      let handles = Creatures.map(creature => {
+        return this.createLaunchable({
+          ...creature
+          , resource: creature.image
+          , scale: 0.10
+          , x: 300
+          , y: 60
+        })
       })
 
-      // this.createLaunchable({
-      //   ...Creatures[5]
-      //   , resource: Creatures[5].image
-      //   , scale: 0.15
-      //   , x: 260
-      //   , y: 55
-      // })
+      const selectHandle = index => {
+        handles.forEach(h => (h.visible = false))
+        handles[index].visible = true
+      }
+
+      this.$watch('selectedLaunchable', selectHandle)
+      selectHandle(this.selectedLaunchable)
+    }
+    , initSpeedMeter(){
+      const container = new PIXI.Graphics()
+      const targetSpeed = new PIXI.Text('', {
+        fontFamily: 'latin-modern-mono'
+        , fontSize: 18
+        , fill: 0xffffff
+        , align: 'center'
+      })
+
+      const currentSpeed = new PIXI.Text('', {
+        fontFamily: 'latin-modern-mono'
+        , fontSize: 18
+        , fill: 0xffffff
+        , align: 'center'
+      })
+
+      currentSpeed.position.set(0, -20)
+
+      container.addChild(targetSpeed)
+      container.addChild(currentSpeed)
+
+      container.position.set(24, this.dimensions.height - 40)
+      this.$watch('dimensions', ({ width, height }) => {
+        container.position.set(24, height - 40)
+      })
+
+      this.$watch('launchableSpeed', _throttle(speed => {
+        currentSpeed.text = speed.toFixed(2) + ' m/s'
+      }, 50), { immediate: true })
+
+      this.$watch('launchableTargetSpeed', speed => {
+        targetSpeed.text = speed.toFixed(2) + ' m/s'
+      }, { immediate: true })
+
+      container.zIndex = 20
+      this.stage.addChild(container)
     }
     , createFlyer( cfg ){
 
@@ -462,19 +513,20 @@ export default {
       this.creaturesLayer.addChild(movingGraphic)
 
       // track
+      const trackWidth = 800000
       let track = new PIXI.Graphics()
       track.interactive = true
       track.lineStyle(2, 0xffffff, 1)
       track.moveTo(0, 0)
-      track.lineTo(400000, 0)
+      track.lineTo(trackWidth, 0)
       track.alpha = 0.05
       // track.beginFill(0xFF9933)
       // track.drawRoundedRect(0, 0, 20000, 2, 0)
       // track.endFill()
-      track.x = -200000
+      track.x = -trackWidth/2
       track.y = 0
       track.zIndex = -1
-      track.hitArea = new PIXI.Rectangle(0, -20, 400000, 40)
+      track.hitArea = new PIXI.Rectangle(0, -20, trackWidth, 40)
       track.cursor = 'grab'
 
       track.on('pointerover', () => {
@@ -732,6 +784,7 @@ export default {
         let dt = Math.max(time - lastTime, 10)
 
         speed = Math.max((pos.x - lastPos.x) / dt, 0)
+        this.launchableSpeed = speed
 
         lastPos = pos
         lastTime = time
@@ -788,6 +841,7 @@ export default {
         .on('pointerupoutside', release)
 
       this.launchersLayer.addChild(handle)
+      return handle
     }
     , draw(dt){
       if ( this.paused ){ return }
@@ -831,3 +885,13 @@ export default {
   }
 }
 </script>
+
+<style lang="sass" scoped>
+.wrap
+  position: relative
+.launchable-selector
+  position: absolute
+  top: 2.5em
+  left: 1em
+  z-index: 2
+</style>
