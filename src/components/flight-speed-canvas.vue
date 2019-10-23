@@ -103,22 +103,24 @@ function lengthScale( maxWidth = 400 ){
 }
 
 const makeTrail = (function(){
+  const width = 1000
   const canvas = document.createElement('canvas')
   canvas.height = 2
+  canvas.width = width
 
   const ctx = canvas.getContext('2d')
+  // trail
+  // let trailWidth = 500 * cfg.speed
+  let gradient = ctx.createLinearGradient(0, 0, width, 0)
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 0)')
+  gradient.addColorStop(1, '#ffffff')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, width, 2)
+  const texture = PIXI.Texture.from(canvas.toDataURL())
 
   return trailWidth => {
-    // trail
-    // let trailWidth = 500 * cfg.speed
-    ctx.canvas.width = trailWidth
-    ctx.clearRect(0, 0, trailWidth, 2)
-    let gradient = ctx.createLinearGradient(0, 0, trailWidth, 0)
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0)')
-    gradient.addColorStop(1, '#ffffff')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, trailWidth, 2)
-    let trail = new PIXI.Sprite(PIXI.Texture.from(canvas.toDataURL()))
+    let trail = new PIXI.Sprite(texture)
+    trail.scale.set(trailWidth/width, 1)
     trail.anchor.set(1, 0.5)
 
     return trail
@@ -238,23 +240,23 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     })
 
-    // this.shadowFilter = new DropShadowFilter({
-    //   shadowOnly: false
-    //   , rotation: 90.1
-    //   , distance: 0
-    //   , blur: 2
-    //   , quality: 5
-    //   , alpha: 0.3
-    // })
-    //
-    // this.$on('zoom', (scale) => {
-    //   this.shadowFilter.distance = 500 * scale
-    // })
+    this.shadowFilter = new DropShadowFilter({
+      shadowOnly: false
+      , rotation: 90.1
+      , distance: 0
+      , blur: 2
+      , quality: 5
+      , alpha: 0.3
+    })
+
+    this.$on('zoom', (scale) => {
+      this.shadowFilter.distance = 500 * scale
+    })
 
     this.creaturesLayer = new PIXI.Container()
     this.creaturesLayer.sortableChildren = true
     this.creaturesLayer.zIndex = 8
-    // this.creaturesLayer.filters = [this.shadowFilter]
+    this.creaturesLayer.filters = [this.shadowFilter]
     this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
@@ -542,9 +544,9 @@ export default {
       const fixScale = scale => {
         // unzoom the track
         const s = 1 / scale
-        track.scale.set(1, s)
-        trail.scale.set(1, s)
-        trailClone.scale.set(1, s)
+        track.scale.set(track.scale.x, s)
+        trail.scale.set(trail.scale.x, s)
+        trailClone.scale.set(trailClone.scale.x, s)
         title.position.set(this.dimensions.width / 2, viewport.toScreen(movingGraphic.position).y)
         // motionBlur.velocity.x = cfg.speed * scale * 2
 
