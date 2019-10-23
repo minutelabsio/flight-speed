@@ -5,12 +5,12 @@ export const Loader = PIXI.Loader.shared
 
 const SPRITES = {
   'testDrag': require('@/assets/dragon-test.png')
-  , 'nyan.png': require('@/assets/creatures/nyan.png')
-  , 'nyan-jackson.gif': require('@/assets/creatures/nyan-jackson.gif')
-  , 'nyan2': require('@/assets/creatures/nyan-balloon.gif')
-  , 'nyan3': require('@/assets/creatures/nyan-zombie.gif')
-  , 'nyan4': require('@/assets/creatures/nyan-coin.gif')
-  , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
+  // , 'nyan.png': require('@/assets/creatures/nyan.png')
+  // , 'nyan-jackson.gif': require('@/assets/creatures/nyan-jackson.gif')
+  // , 'nyan2': require('@/assets/creatures/nyan-balloon.gif')
+  // , 'nyan3': require('@/assets/creatures/nyan-zombie.gif')
+  // , 'nyan4': require('@/assets/creatures/nyan-coin.gif')
+  // , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
   , 'cityTile': require('@/assets/bg.jpg')
   , '747-test.png': require('@/assets/creatures/747-test.png')
 }

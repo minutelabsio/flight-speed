@@ -15,6 +15,8 @@ import { DropShadowFilter } from '@pixi/filter-drop-shadow'
 import { Viewport } from 'pixi-viewport'
 import Creatures from '@/config/creatures.yaml'
 
+PIXI.settings.PRECISION_FRAGMENT = 'mediump'
+
 const svgResources = {
   'bee': require('@/assets/bee.svg')
 }
@@ -67,6 +69,7 @@ function lengthScale( maxWidth = 400 ){
     , fill: 0xffffff
     , align: 'center'
   })
+  text.resolution = window.devicePixelRatio
   text.anchor.set(0.5)
   graphics.addChild(text)
 
@@ -214,7 +217,7 @@ export default {
     viewport
       // .drag()
       .decelerate()
-      .pinch({ center })
+      .pinch({ center, noDrag: true })
       .wheel({ center, smooth: 20 })
       .clampZoom({
         minHeight: 100
@@ -235,23 +238,23 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     })
 
-    this.shadowFilter = new DropShadowFilter({
-      shadowOnly: false
-      , rotation: 90.1
-      , distance: 0
-      , blur: 2
-      , quality: 5
-      , alpha: 0.3
-    })
-
-    this.$on('zoom', (scale) => {
-      this.shadowFilter.distance = 500 * scale
-    })
+    // this.shadowFilter = new DropShadowFilter({
+    //   shadowOnly: false
+    //   , rotation: 90.1
+    //   , distance: 0
+    //   , blur: 2
+    //   , quality: 5
+    //   , alpha: 0.3
+    // })
+    //
+    // this.$on('zoom', (scale) => {
+    //   this.shadowFilter.distance = 500 * scale
+    // })
 
     this.creaturesLayer = new PIXI.Container()
     this.creaturesLayer.sortableChildren = true
     this.creaturesLayer.zIndex = 8
-    this.creaturesLayer.filters = [this.shadowFilter]
+    // this.creaturesLayer.filters = [this.shadowFilter]
     this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
@@ -479,11 +482,15 @@ export default {
       }).on('pointerdown', (e) => {
         // if mousebutton is used and it's not left btn, this will be non-zero
         if ( e.data.originalEvent.button ){ return }
-        e.stopPropagation()
+        // e.stopPropagation()
         track.data = e.data
         track.cursor = 'grabbing'
         track.dragging = true
-      }).on('pointermove', () => {
+      }).on('pointermove', (e) => {
+        if ( e.data.originalEvent.touches && e.data.originalEvent.touches.length > 1 ){
+          stopDrag()
+          return
+        }
         if ( track.dragging ){
           const newPosition = track.data.getLocalPosition(track.parent)
           const bot = this.viewport.bottom
@@ -521,7 +528,7 @@ export default {
         , align: 'center'
       })
       title.alpha = 0.9
-      title.resolution = 2
+      title.resolution = window.devicePixelRatio
       // title.scale.set(cfg.scale)
       title.anchor.set(0.5, 1)
       // title.position.set(-(1.3) * image.width / 2, 0)
