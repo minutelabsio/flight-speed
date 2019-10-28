@@ -10,6 +10,7 @@ import Promise from 'bluebird'
 import WebFont from 'webfontloader'
 import _debounce from 'lodash/debounce'
 import _throttle from 'lodash/throttle'
+import _filter from 'lodash/filter'
 import { tween } from 'shifty'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
@@ -632,16 +633,46 @@ export default {
       function show(){
         movingGraphic.visible = true
         track.visible = true
+        title.visible = true
         offscreenIndicator.visible = true
       }
 
-      function hide(){
-        movingGraphic.visible = false
-        track.visible = false
-        offscreenIndicator.visible = false
+      function hide( fadeTime = 0 ){
+        if ( !fadeTime ){
+          movingGraphic.visible = false
+          track.visible = false
+          title.visible = false
+          offscreenIndicator.visible = false
+          return Promise.resolve()
+        }
+
+        return tween({
+          from: { alpha: 1 }
+          , to: { alpha: 0 }
+          , delay: 0
+          , duration: fadeTime
+          , easing: 'easeOutQuad'
+          , step: state => {
+            let { alpha } = state
+            movingGraphic.alpha = alpha
+            track.alpha = alpha
+            title.alpha = alpha
+            offscreenIndicator.alpha = alpha
+          }
+        }).then(() => {
+          hide(0)
+          movingGraphic.alpha = 1
+          track.alpha = 1
+          title.alpha = 1
+          offscreenIndicator.alpha = 1
+        })
       }
 
-      const destroy = () => {
+      const destroy = ( fadeTime = 0 ) => {
+        if ( fadeTime ){
+          return hide(fadeTime).then(() => destroy())
+        }
+
         let idx = this.creatures.indexOf(creature)
         if ( idx > -1 ){
           this.creatures.splice(idx, 1)
@@ -692,7 +723,8 @@ export default {
       }
 
       const creature = {
-        movingGraphic
+        name: cfg.name
+        , movingGraphic
         , track
         , speed: cfg.speed
         , paused: false
@@ -771,6 +803,13 @@ export default {
           creature.setXPosition(pos.x)
           creature.setYPosition(pos.y)
         })
+
+        // hide other instances
+
+        _filter(this.creatures, { name: cfg.name }).forEach(c => {
+          if ( c === creature ){ return }
+          c.destroy(1000)
+        })
       }
 
       const move = () => {
@@ -805,19 +844,27 @@ export default {
 
       const fall = creature => {
         creature.movingGraphic.zIndex = 0
+        creature.track.visible = false
         creature.movingGraphic.getChildByName('trailClone').visible = false
+        const trail = creature.movingGraphic.getChildByName('trail')
+        const startScale = trail.scale.clone()
         tween({
-          from: { speed, scale: creature.movingGraphic.scale.x }
-          , to: { speed: 0, scale: 0 }
+          from: { speed, scale: creature.movingGraphic.scale.x, alpha: 1 }
+          , to: { speed: 0, scale: 1e-9, alpha: 0 }
           , delay: 0
           , duration: 3000
           , easing: 'easeOutQuad'
           , step: state => {
-            creature.speed = state.speed
-            creature.movingGraphic.scale.set(state.scale, state.scale)
+            let { scale, alpha, speed } = state
+            let s = 1/scale
+            creature.speed = speed
+            creature.movingGraphic.scale.set(scale, scale)
+            trail.scale.set(startScale.x * s, startScale.y * s)
+            trail.alpha = alpha
           }
         }).then(() => {
-          creature.destroy()
+          trail.visible = false
+          creature.destroy(500)
         })
       }
 
