@@ -269,12 +269,13 @@ export default {
     app.renderer.view.style.position = 'absolute'
     app.renderer.view.style.display = 'block'
 
+    this.middlePoint = new PIXI.Point(0, 0)
     const center = new PIXI.Point(0, 0)
     const viewport = new Viewport({
       screenWidth: this.dimensions.width
       , screenHeight: this.dimensions.height
       , worldWidth: 10
-      , worldHeight: 100000
+      , worldHeight: 1600000
       , interaction: app.renderer.plugins.interaction
       , center
       , passiveWheel: false
@@ -283,26 +284,35 @@ export default {
     this.viewport = viewport
 
     viewport
-      // .drag()
+      .drag()
       .decelerate()
-      .pinch({ center, noDrag: true })
-      .wheel({ center, smooth: 20 })
+      .pinch({
+        noDrag: true
+        , percent: 25
+        // , center
+      })
+      .wheel({
+        smooth: 20
+        // , center
+      })
       .clampZoom({
         minHeight: 100
         , maxHeight: 800000
       })
-      // .clamp({
-      //   top: -100000
-      //   , bottom: 100000
-      //   , left: 0
-      //   , right: 0
-      // })
+      .clamp({
+        top: -800000
+        , bottom: 800000
+        , left: 0
+        , right: 0
+      })
     // viewport.snap(0, 0, { time: 0 })
     viewport.ensureVisible(-this.dimensions.width/2, -this.dimensions.height/2, this.dimensions.width, this.dimensions.height)
     viewport.sortableChildren = true
     viewport.zIndex = 8
 
     viewport.on('zoomed', () => {
+      this.$emit('zoom', this.viewport.scaled)
+    }).on('moved', () => {
       this.$emit('zoom', this.viewport.scaled)
     })
 
@@ -405,9 +415,10 @@ export default {
       this.flickGesture = flickGestureImage()
 
       this.creatures = []
+      let toDie
 
       Creatures.forEach(c => {
-        this.createFlyer({
+        let flyer = this.createFlyer({
           resource: c.image
           , x: this.viewport.left / 4
           , y: c.position.y
@@ -417,6 +428,10 @@ export default {
           , name: c.name
           , handleScale: 0.10
         })
+
+        if ( c.name === 'Bald eagle' ){
+          toDie = flyer
+        }
       })
 
       this.initBg()
@@ -429,6 +444,7 @@ export default {
       this.animateEntrance()
       Promise.delay(200).then(() => {
         this.paused = false
+        toDie.setDead()
       })
     }
     , animateEntrance(){
@@ -438,7 +454,7 @@ export default {
         from: { opacity: 1 }
         , to: { opacity: 0 }
         , delay: 0
-        , duration: 500 //2000
+        , duration: process.env.NODE_ENV === 'production' ? 2000 : 500
         , easing: 'easeInOutQuad'
         , step: state => {
           this.entranceOverlay.alpha = state.opacity
@@ -448,8 +464,8 @@ export default {
       return tween({
         from: { zoom: 0.01 }
         , to: { zoom: 0.1 }
-        , delay: 0 //1000
-        , duration: 500 //4000
+        , delay: process.env.NODE_ENV === 'production' ? 1000 : 0
+        , duration: process.env.NODE_ENV === 'production' ? 4000 : 500
         , easing: 'easeInOutSine'
         , step: state => {
           this.zoom( state.zoom )
@@ -832,6 +848,7 @@ export default {
         handle.position.y = viewport.toScreen(track.position).y
         handle.visible = true
         this.deadCreature = creature
+        this.launchableCreature = cfg
         creature.isDead = true
         creature.movingGraphic.scale.set(1, 1)
         trail.alpha = 1
@@ -988,6 +1005,7 @@ export default {
       creature.fall = fall
       creature.fly = fly
       creature.release = release
+      creature.setDead = setDead
 
       const handleZoom = () => {
         if ( creature.isDead ){ return }
@@ -1164,6 +1182,7 @@ export default {
       let zoom = vp.screenHeight / (2 * hh + creature.movingGraphic.height)
 
       this.animateZoomTo(zoom)
+      this.animateMoveTo(creature.movingGraphic.position.y)
     }
     , animateZoomTo( zoom, duration = 1000, step ){
       const vp = this.viewport
@@ -1178,6 +1197,19 @@ export default {
           if ( step ){
             step()
           }
+        }
+      })
+    }
+    , animateMoveTo( y, duration = 1000 ){
+      const vp = this.viewport
+      tween({
+        from: { x: vp.center.x, y: vp.center.y }
+        , to: { x: vp.center.x, y: y }
+        , delay: 0
+        , duration
+        , easing: 'easeOutQuad'
+        , step: state => {
+          vp.moveCenter( state.x, state.y )
         }
       })
     }

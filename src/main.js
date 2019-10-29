@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import App from '@/app'
-import VueAnalytics from 'vue-analytics'
+// import VueAnalytics from 'vue-analytics'
 import router from '@/router'
 import Filters from '@/plugins/filters'
 import Gestures from '@/plugins/gestures'
