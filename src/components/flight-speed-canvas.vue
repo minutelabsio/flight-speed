@@ -1,5 +1,12 @@
 <template lang="pug">
 .wrap
+  .top-drawer
+    .media
+      .media-content
+        router-link(:to="{ name: 'about' }") About this Lab
+      .media-right
+        a(href="https://minutelabs.io").logo.image.is-32x32
+          img(src="//cdn.minutelabs.io/logos/logo-minutelabs-no-text-40x40.png")
   .speed-o-meter(v-if="launchableTargetSpeed")
     span.current {{ launchableSpeed.toFixed(2) }}
     span=" / "
@@ -1233,6 +1240,17 @@ export default {
   top: 2.5em
   left: 1em
   z-index: 2
+.top-drawer
+  position: absolute
+  top: 0
+  right: 0
+  z-index: 100
+  font-size: 20px
+  font-family: $family-monospace
+  padding: 1em
+  a
+    color: white
+    text-decoration: underline
 .speed-o-meter
   position: absolute
   bottom: 30px
@@ -1259,4 +1277,20 @@ export default {
       transition: width .15s linear
       height: 100%
       background: white
+.logo
+  background: white
+  border-radius: 50%
+  padding: 3px
+
+  transition: all 0.3s ease
+  box-shadow: 0 0 0 $yellow
+
+  &:hover
+    box-shadow: 0 0 15px $yellow
+a
+  text-shadow: 0 0 0 $yellow
+  transition: all 0.3s ease
+
+  &:hover
+    text-shadow: 0 0 15px $yellow
 </style>
