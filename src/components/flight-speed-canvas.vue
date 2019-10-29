@@ -1,5 +1,13 @@
 <template lang="pug">
 .wrap
+  .speed-o-meter(v-if="launchableTargetSpeed")
+    span.current {{ launchableSpeed.toFixed(2) }}
+    span=" / "
+    span.target {{ launchableTargetSpeed.toFixed(2) }}
+    span  m/s
+    .bar
+      .inner
+        .bg(:style="{ width: speedPercentage + '%', backgroundColor: speedColor }")
   //- .launchable-selector
   //-   b-select(v-model="selectedLaunchable")
   //-     option(v-for="(creature, key) in creatureList", :value="key") {{ creature.name }}
@@ -231,8 +239,8 @@ export default {
       width: window.innerWidth
       , height: window.innerHeight
     }
-    , selectedLaunchable: 0
     , creatureList: Creatures
+    , launchableCreature: null
     , launchableSpeed: 0
   })
   , created(){
@@ -368,7 +376,22 @@ export default {
   }
   , computed: {
     launchableTargetSpeed(){
-      return Creatures[this.selectedLaunchable].speed
+      return this.launchableCreature && this.launchableCreature.speed
+    }
+    , speedPercentage(){
+      return 100 * this.launchableSpeed / this.launchableTargetSpeed
+    }
+    , speedColor(){
+      let c = 'rgba(0, 200, 0, 0.9)'
+      let p = this.speedPercentage
+      if ( p < 100 ){
+        c = 'rgba(200, 200, 0, 0.9)'
+      }
+      if ( p < 80 ){
+        c = 'rgba(200, 0, 0, 0.9)'
+      }
+
+      return c
     }
   }
   , mounted(){
@@ -399,7 +422,7 @@ export default {
       this.initBg()
       this.initLengthScale()
       // this.initLaunchers()
-      this.initSpeedMeter()
+      // this.initSpeedMeter()
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
@@ -556,6 +579,8 @@ export default {
       }, 50), { immediate: true })
 
       this.$watch('launchableTargetSpeed', speed => {
+        container.visible = !!speed
+        if ( !speed ){ return }
         targetSpeed.text = speed.toFixed(2) + ' m/s'
       }, { immediate: true })
 
@@ -832,12 +857,14 @@ export default {
           creature.setYPosition(lastPos.y)
         }
 
+        clearTimeout(this.flyTimeout)
+        this.launchableCreature = cfg
+        this.setLaunchableSpeed(0)
         trail.cursor = 'grabbing'
         handle.visible = false
         creature.paused = true
         creature.grabbing = true
         creature.isDead = false
-        this.deadCreature = null
         show()
         fixScale()
         trailClone.visible = false
@@ -862,13 +889,19 @@ export default {
         let dt = Math.max(time - lastTime, minTimeDelay)
 
         speed = Math.max((pos.x - lastPos.x) / dt, 0)
-        this.launchableSpeed = speed
+        this.setLaunchableSpeed(speed)
 
         lastPos = pos
         lastTime = time
       }
 
       const fly = (creature, speed) => {
+        this.deadCreature = null
+
+        this.flyTimeout = setTimeout(() => {
+          this.launchableCreature = null
+        }, 4000)
+
         tween({
           from: { speed }
           , to: { speed: cfg.speed }
@@ -922,7 +955,7 @@ export default {
           screenPos = handle.data.getLocalPosition(handle.parent)
           const pos = viewport.toWorld(screenPos)
           speed = Math.max((pos.x - lastPos.x) / dt, 0)
-          this.launchableSpeed = speed
+          this.setLaunchableSpeed(speed)
         }
 
         handle.data = null
@@ -1152,6 +1185,9 @@ export default {
       this.viewport.setZoom( scale )
       this.$emit('zoom', scale)
     }
+    , setLaunchableSpeed: _throttle(function(s){
+      this.launchableSpeed = s
+    }, 50)
   }
 }
 </script>
@@ -1159,9 +1195,36 @@ export default {
 <style lang="sass" scoped>
 .wrap
   position: relative
+  height: 100vh
 .launchable-selector
   position: absolute
   top: 2.5em
   left: 1em
   z-index: 2
+.speed-o-meter
+  position: absolute
+  bottom: 30px
+  left: 0px
+  padding: 0 30px
+  width: 50vw
+  max-width: 400px
+  z-index: 100
+  font-family: $family-monospace
+  font-size: 20px
+
+  .bar
+    height: 20px
+    width: 100%
+    border: 1px solid rgba(255, 255, 255, 0.5)
+    border-radius: 2px
+    overflow: hidden
+    position: relative
+    .inner
+      height: 100%
+      width: 80%
+      border-right: 1px solid rgba(0, 200, 0, 0.8)
+    .bg
+      transition: width .15s linear
+      height: 100%
+      background: white
 </style>
