@@ -8,10 +8,8 @@
         a(href="https://minutelabs.io").logo.image.is-32x32
           img(src="//cdn.minutelabs.io/logos/logo-minutelabs-no-text-40x40.png")
   .speed-o-meter(v-if="launchableTargetSpeed")
-    span.current {{ launchableSpeed.toFixed(2) }}
-    span=" / "
-    span.target {{ launchableTargetSpeed.toFixed(2) }}
-    span  m/s
+    span.current {{ launchableSpeed.toFixed(2) }} m/s
+    span.target {{ launchableTargetSpeed.toFixed(2) }} m/s
     .bar
       .inner
         .bg(:style="{ width: speedPercentage + '%', backgroundColor: speedColor }")
@@ -352,6 +350,7 @@ export default {
     this.viewport.addChild(this.creaturesLayer)
 
     this.trackLayer = new PIXI.Container()
+    this.trackLayer.sortableChildren = true
     this.trackLayer.zIndex = 0
     this.viewport.addChild(this.trackLayer)
 
@@ -523,6 +522,8 @@ export default {
       let tile = new PIXI.TilingSprite(texture, width, height)
       tile.alpha = 0.6
       tile.tilePosition.set(width/2, height/2)
+      // tile.anchor.set(0.5)
+      tile.uvRespectAnchor = true
 
       // this.viewport.on('moved', () => {
       //   let x = this.viewport.center.x
@@ -534,9 +535,15 @@ export default {
       //   // tile.tileScale.set(parallax, parallax)
       // })
 
+      const dist = 1000000
+      const z = 1000
       this.$on('zoom', scale => {
-        let parallax = Math.pow(scale, 0.1)
+        let {width, height} = this.dimensions
+        let parallax = scale * (z + dist) / (z + scale * dist)
+        let pos = this.viewport.toScreen(width/2, height/2)
+        // console.log(this.viewport.toScreen(0, 0))
         tile.tileScale.set(parallax, parallax)
+        // tile.tilePosition.set(pos.x * parallax, pos.y * parallax)
       })
 
       this.$watch('dimensions', ({ width, height }) => {
@@ -639,7 +646,7 @@ export default {
       // track.endFill()
       track.x = -trackWidth/2
       track.y = 0
-      track.zIndex = -1
+      track.zIndex = 0
       track.hitArea = new PIXI.Rectangle(0, -20, trackWidth, 40)
       track.cursor = 'grab'
 
@@ -884,6 +891,7 @@ export default {
         clearTimeout(this.flyTimeout)
         this.launchableCreature = cfg
         this.setLaunchableSpeed(0)
+        track.zIndex = 10
         trail.cursor = 'grabbing'
         handle.visible = false
         creature.paused = true
@@ -902,8 +910,9 @@ export default {
         })
       }
 
-      const move = (screenPos) => {
+      const move = (e) => {
         if ( !creature.grabbing ){ return }
+        e.stopPropagation()
         screenPos = handle.data.getLocalPosition(handle.parent)
         const pos = viewport.toWorld(screenPos)
         creature.setXPosition(pos.x)
@@ -969,8 +978,10 @@ export default {
         })
       }
 
-      const release = () => {
+      const release = (e) => {
         if ( !creature.grabbing ){ return }
+
+        e.stopPropagation()
 
         const time = performance.now()
         let dt = time - lastTime
@@ -986,6 +997,7 @@ export default {
         handle.cursor = 'grab'
         creature.paused = false
         creature.grabbing = false
+        track.zIndex = 0
 
         if ( speed < minThrowSpeed ){
           setDead()
@@ -1233,8 +1245,11 @@ export default {
 
 <style lang="sass" scoped>
 .wrap
-  position: relative
-  height: 100vh
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
 .launchable-selector
   position: absolute
   top: 2.5em
@@ -1261,9 +1276,25 @@ export default {
   z-index: 100
   font-family: $family-monospace
   font-size: 20px
+  pointer-events: none
+
+  .current
+    position: absolute
+    bottom: -3px
+    left: 38px
+    z-index: 2
+  .target
+    position: absolute
+    left: 80%
+    margin-left: -20px
+    top: -1.4em
+    white-space: nowrap
+  .target,
+  .current
+    text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.8)
 
   .bar
-    height: 20px
+    height: 1.2em
     width: 100%
     border: 1px solid rgba(255, 255, 255, 0.5)
     border-radius: 2px
