@@ -517,10 +517,10 @@ export default {
       return guides
     }
     , initBg(){
-      let texture = Loader.resources.cityTile.texture
+      let texture = Loader.resources.background.texture
       let {width, height} = this.dimensions
       let tile = new PIXI.TilingSprite(texture, width, height)
-      tile.alpha = 0.6
+      tile.alpha = 1
       tile.tilePosition.set(width/2, height/2)
       // tile.anchor.set(0.5)
       tile.uvRespectAnchor = true
