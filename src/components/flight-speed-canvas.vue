@@ -39,7 +39,7 @@ const svgResources = {
   'bee': require('@/assets/bee.svg')
 }
 
-const SCREEN_MARGIN = 200
+const SCREEN_MARGIN = 0 //200
 const GLOBAL_IMAGE_SCALE = 1000
 
 // function ignoreUselessErrors(error){
@@ -481,7 +481,7 @@ export default {
     , initLengthScale(){
       let ls = lengthScale(0.5 * Math.min(810, this.dimensions.width, this.dimensions.height))
       ls.graphics.zIndex = 9
-      ls.graphics.position.set(this.dimensions.width - 50, this.dimensions.height - 50)
+      ls.graphics.position.set(this.dimensions.width - 30, this.dimensions.height - 30)
       ls.setScale(1)
 
       this.$on('zoom', s => {
@@ -529,8 +529,6 @@ export default {
           , window.devicePixelRatio
         )
       ]
-      // tile.anchor.set(0.5)
-      tile.uvRespectAnchor = true
 
       // this.viewport.on('moved', () => {
       //   let x = this.viewport.center.x
@@ -547,7 +545,7 @@ export default {
       this.$on('zoom', scale => {
         let {width, height} = this.dimensions
         let parallax = scale * (z + dist) / (z + scale * dist)
-        let pos = this.viewport.toScreen(width/2, height/2)
+        // let pos = this.viewport.toScreen(width/2, height/2)
         // console.log(this.viewport.toScreen(0, 0))
         tile.tileScale.set(parallax, parallax)
         // tile.tilePosition.set(pos.x * parallax, pos.y * parallax)
@@ -556,6 +554,7 @@ export default {
       this.$watch('dimensions', ({ width, height }) => {
         tile.width = width
         tile.height = height
+        tile.tilePosition.set(width/2, height/2)
       })
 
       this.stage.addChild(tile)
@@ -641,7 +640,7 @@ export default {
       this.creaturesLayer.addChild(movingGraphic)
 
       // track
-      const trackWidth = 800000
+      const trackWidth = 2e7
       let track = new PIXI.Graphics()
       track.interactive = true
       track.lineStyle(2, 0xffffff, 1)
