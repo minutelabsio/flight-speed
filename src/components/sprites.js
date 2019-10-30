@@ -12,7 +12,7 @@ const SPRITES = {
   // , 'nyan4': require('@/assets/creatures/nyan-coin.gif')
   // , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
   , 'cityTile': require('@/assets/bg.jpg')
-  , 'background': require('@/assets/ML 12 - Background.jpg')
+  , 'background': require('@/assets/ML 12 - Ground.jpg')
   , '747-test.png': require('@/assets/creatures/747-test.png')
 }
 

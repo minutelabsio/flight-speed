@@ -522,6 +522,13 @@ export default {
       let tile = new PIXI.TilingSprite(texture, width, height)
       tile.alpha = 1
       tile.tilePosition.set(width/2, height/2)
+      tile.filters = [
+        new PIXI.filters.BlurFilter(
+          4 // strength
+          , 4 // quality
+          , window.devicePixelRatio
+        )
+      ]
       // tile.anchor.set(0.5)
       tile.uvRespectAnchor = true
 
@@ -910,10 +917,12 @@ export default {
         })
       }
 
+      const margin = 100
       const move = (e) => {
         if ( !creature.grabbing ){ return }
         e.stopPropagation()
         screenPos = handle.data.getLocalPosition(handle.parent)
+        screenPos.y = Math.max(margin, Math.min(this.dimensions.height - margin, screenPos.y))
         const pos = viewport.toWorld(screenPos)
         creature.setXPosition(pos.x)
         creature.setYPosition(pos.y)
@@ -1250,6 +1259,7 @@ export default {
   left: 0
   right: 0
   bottom: 0
+  user-select: none
 .launchable-selector
   position: absolute
   top: 2.5em
