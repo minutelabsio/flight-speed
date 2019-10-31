@@ -13,6 +13,7 @@ const SPRITES = {
   // , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
   , 'cityTile': require('@/assets/bg.jpg')
   , 'background': require('@/assets/ML 12 - Ground.jpg')
+  , 'clouds': require('@/assets/ML 12 - Clouds.png')
   , '747-test.png': require('@/assets/creatures/747-test.png')
 }
 

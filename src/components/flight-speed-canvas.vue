@@ -535,17 +535,27 @@ export default {
       return guides
     }
     , initBg(){
-      let texture = Loader.resources.background.texture
       let {width, height} = this.dimensions
-      let tile = new PIXI.TilingSprite(texture, width, height)
-      tile.alpha = 1
-      tile.tilePosition.set(width/2, height/2)
-      tile.filters = [
-        new PIXI.filters.BlurFilter(
-          4 // strength
-          , 4 // quality
-        )
+
+      let gaussianBlur = new PIXI.filters.BlurFilter(
+        4 // strength
+        , 4 // quality
+      )
+      let groundTexture = Loader.resources.background.texture
+      let ground = new PIXI.TilingSprite(groundTexture, width, height)
+      ground.zIndex = -1
+      ground.alpha = 1
+      ground.tilePosition.set(width/2, height/2)
+      ground.filters = [
+        gaussianBlur
       ]
+
+      let cloudsTexture = Loader.resources.clouds.texture
+      let clouds = new PIXI.TilingSprite(cloudsTexture, width, height)
+      clouds.zIndex = 0
+      clouds.alpha = 0.8
+      clouds.tilePosition.set(width/2, height/2)
+      this.clouds = clouds
 
       // this.viewport.on('moved', () => {
       //   let x = this.viewport.center.x
@@ -553,28 +563,40 @@ export default {
       //   let scale = this.viewport.scaled
       //   console.log(scale)
       //   // let parallax = scale * 0.1
-      //   tile.tilePosition.set(x * scale, y * scale)
-      //   // tile.tileScale.set(parallax, parallax)
+      //   ground.tilePosition.set(x * scale, y * scale)
+      //   // ground.tileScale.set(parallax, parallax)
       // })
 
-      const dist = 1000000
+      const groundDist = 4000000
+      const skyDist = 100000
       const z = 1000
+      function getParallax(scale, d){
+        return scale * (z + d) / (z + scale * d)
+      }
       this.$on('zoom', scale => {
         let {width, height} = this.dimensions
-        let parallax = scale * (z + dist) / (z + scale * dist)
+        let groundParallax = getParallax(scale, groundDist)
+        let skyParallax = getParallax(scale * 4, skyDist)
         // let pos = this.viewport.toScreen(width/2, height/2)
         // console.log(this.viewport.toScreen(0, 0))
-        tile.tileScale.set(parallax, parallax)
-        // tile.tilePosition.set(pos.x * parallax, pos.y * parallax)
+        ground.tileScale.set(groundParallax, groundParallax)
+        clouds.tileScale.set(skyParallax, skyParallax)
+        // ground.tilePosition.set(pos.x * parallax, pos.y * parallax)
+
+        gaussianBlur.blur = Math.max(2, Math.min(5, 1 / scale / 5))
       })
 
       this.$watch('dimensions', ({ width, height }) => {
-        tile.width = width
-        tile.height = height
-        tile.tilePosition.set(width/2, height/2)
+        ground.width = width
+        ground.height = height
+        ground.tilePosition.set(width/2, height/2)
+        clouds.width = width
+        clouds.height = height
+        clouds.tilePosition.set(width/2, height/2)
       })
 
-      this.stage.addChild(tile)
+      this.stage.addChild(ground)
+      this.stage.addChild(clouds)
     }
     , initLaunchers(){
       let bg = new PIXI.Sprite(PIXI.Texture.WHITE)
