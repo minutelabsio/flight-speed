@@ -50,6 +50,13 @@ const GLOBAL_IMAGE_SCALE = 1000
 //   return Promise.reject(error)
 // }
 
+function smoothValue(x, px, alpha = 0.5){
+  if ( px === undefined ){
+    return x
+  }
+  return alpha * x + (1 - alpha) * px
+}
+
 function loadFonts(){
   return new Promise((resolve, reject) => {
     WebFont.load({
@@ -270,6 +277,7 @@ export default {
     })
 
     this.stage = app.stage
+    this.stage.interactive = true
     app.renderer.autoResize = true
     app.renderer.view.style.position = 'absolute'
     app.renderer.view.style.display = 'block'
@@ -292,8 +300,8 @@ export default {
       .drag()
       .decelerate()
       .pinch({
-        noDrag: true
-        , percent: 25
+        noDrag: false
+        , percent: 10
         // , center
       })
       .wheel({
@@ -319,6 +327,14 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     }).on('moved', () => {
       this.$emit('zoom', this.viewport.scaled)
+    }).on('pinch-start', () => {
+      this.stageInteract = true
+    }).on('pinch-end', () => {
+      this.stageInteract = false
+    }).on('drag-start', () => {
+      this.stageInteract = true
+    }).on('drag-end', () => {
+      this.stageInteract = false
     })
 
     this.pulsateFilter = new GlowFilter(
@@ -358,7 +374,8 @@ export default {
     this.stage.addChild(this.viewport)
 
     this.labelLayer = new PIXI.Container()
-    this.labelLayer.zIndex = 0
+    this.labelLayer.zIndex = 1
+    this.labelLayer.alpha = 0.6
     this.stage.addChild(this.labelLayer)
 
     this.bubbleLayer = new PIXI.Container()
@@ -479,9 +496,10 @@ export default {
       })
     }
     , initLengthScale(){
+      const margin = 30
       let ls = lengthScale(0.5 * Math.min(810, this.dimensions.width, this.dimensions.height))
       ls.graphics.zIndex = 9
-      ls.graphics.position.set(this.dimensions.width - 30, this.dimensions.height - 30)
+      ls.graphics.position.set(this.dimensions.width - margin, this.dimensions.height - margin)
       ls.setScale(1)
 
       this.$on('zoom', s => {
@@ -489,7 +507,7 @@ export default {
       })
 
       this.$watch('dimensions', ({ width, height }) => {
-        ls.graphics.position.set(width - 50, height - 50)
+        ls.graphics.position.set(width - margin, height - margin)
       })
 
       this.stage.addChild(ls.graphics)
@@ -526,7 +544,6 @@ export default {
         new PIXI.filters.BlurFilter(
           4 // strength
           , 4 // quality
-          , window.devicePixelRatio
         )
       ]
 
@@ -861,6 +878,10 @@ export default {
       let lastTime = 0
       let speed
 
+      const grabbableObject = image
+      grabbableObject.interactive = true
+      grabbableObject.cursor = 'grab'
+
       const setDead = () => {
         this.flickGesture.position.set(100, 100)
         handle.addChild(this.flickGesture)
@@ -880,8 +901,19 @@ export default {
         hide()
       }
 
+      const minGrabSize = 50
+      const canGrab = () => {
+        if ( this.stageInteract ){ return false }
+        if ( creature.grabbing ){ return false }
+        if ( creature.isDead ){ return true }
+        if ( this.deadCreature && this.deadCreature !== creature ){ return false }
+        let size = (image.width * viewport.scaled)
+        if ( size < minGrabSize || size > this.dimensions.width ){ return false }
+        return true
+      }
+
       const grab = e => {
-        if ( (this.deadCreature && this.deadCreature !== creature) || creature.grabbing ){ return }
+        if ( !canGrab() ){ return }
         if ( e ){
           if ( e.data.originalEvent.button ){ return }
           e.stopPropagation()
@@ -894,11 +926,12 @@ export default {
           creature.setYPosition(lastPos.y)
         }
 
+        speed = undefined
         clearTimeout(this.flyTimeout)
         this.launchableCreature = cfg
         this.setLaunchableSpeed(0)
-        track.zIndex = 10
-        trail.cursor = 'grabbing'
+        movingGraphic.zIndex = 100
+        grabbableObject.cursor = 'grabbing'
         handle.visible = false
         creature.paused = true
         creature.grabbing = true
@@ -929,7 +962,7 @@ export default {
         const time = performance.now()
         let dt = Math.max(time - lastTime, minTimeDelay)
 
-        speed = Math.max((pos.x - lastPos.x) / dt, 0)
+        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
         this.setLaunchableSpeed(speed)
 
         lastPos = pos
@@ -943,7 +976,7 @@ export default {
           this.launchableCreature = null
         }, 4000)
 
-        tween({
+        return tween({
           from: { speed }
           , to: { speed: cfg.speed }
           , delay: 0
@@ -961,7 +994,8 @@ export default {
         track.visible = false
         const startScale = trail.scale.clone()
         let tcx = trailClone.position.x = 1e12
-        tween({
+
+        return tween({
           from: { speed, scale: movingGraphic.scale.x, alpha: 1 }
           , to: { speed: 0, scale: 1e-9, alpha: 0 }
           , delay: 0
@@ -989,42 +1023,79 @@ export default {
       const release = (e) => {
         if ( !creature.grabbing ){ return }
 
-        e.stopPropagation()
-
         const time = performance.now()
         let dt = time - lastTime
         if ( dt > 2 ){
           dt = Math.max(dt, minTimeDelay)
           screenPos = handle.data.getLocalPosition(handle.parent)
           const pos = viewport.toWorld(screenPos)
-          speed = Math.max((pos.x - lastPos.x) / dt, 0)
+          speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
           this.setLaunchableSpeed(speed)
         }
 
         handle.data = null
-        handle.cursor = 'grab'
+        grabbableObject.cursor = 'grab'
         creature.paused = false
-        creature.grabbing = false
         track.zIndex = 0
 
         if ( speed < minThrowSpeed ){
+          creature.grabbing = false
           setDead()
         } else if ( speed >= cfg.speed ){
+          creature.grabbing = false
           fly(creature, speed)
         } else {
-          fall(creature)
+          fall(creature).then(() => {
+            creature.grabbing = false
+          })
         }
       }
 
-      track
+      grabbableObject
         .on('pointerdown', grab)
         .on('pointermove', move)
-        .on('pointerup', release)
-        .on('pointerupoutside', release)
+        // .on('pointerup', release)
+        // .on('pointerupoutside', release)
+
+      this.stage.on('pointerup', release)
 
       handle.on('pointerdown', grab)
 
       this.launchersLayer.addChild(handle)
+
+      // move tracks
+      track.on('pointerover', () => {
+        if ( this.stageInteract || creature.grabbing ){ return }
+        track.alpha = 1
+      }).on('pointerout', () => {
+        track.alpha = 0.1
+      }).on('pointerdown', (e) => {
+        if ( this.stageInteract || creature.grabbing ){ return }
+        // if mousebutton is used and it's not left btn, this will be non-zero
+        if ( e.data.originalEvent.button ){ return }
+        e.stopPropagation()
+        track.data = e.data
+        track.cursor = 'grabbing'
+        track.dragging = true
+      }).on('pointermove', () => {
+        if ( creature.grabbing ){ return }
+        if ( this.stageInteract ){ return stopDrag() }
+        if ( track.dragging ){
+          const newPosition = track.data.getLocalPosition(track.parent)
+          const bot = this.viewport.bottom
+          const top = this.viewport.top
+          const newY = Math.max(top, Math.min(bot, newPosition.y))
+          setYPosition( newY )
+        }
+      })
+      .on('pointerup', stopDrag)
+      .on('pointerupoutside', stopDrag)
+
+      function stopDrag(){
+        track.data = null
+        track.cursor = 'grab'
+        track.dragging = false
+      }
 
       // export
       creature.grab = grab
@@ -1314,7 +1385,7 @@ export default {
       width: 80%
       border-right: 1px solid rgba(0, 200, 0, 0.8)
     .bg
-      transition: width .15s linear
+      transition: width .05s linear
       height: 100%
       background: white
 .logo
