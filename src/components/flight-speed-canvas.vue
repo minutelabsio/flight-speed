@@ -39,7 +39,7 @@ const svgResources = {
   'bee': require('@/assets/bee.svg')
 }
 
-const SCREEN_MARGIN = 200
+const SCREEN_MARGIN = 0 //200
 const GLOBAL_IMAGE_SCALE = 1000
 
 // function ignoreUselessErrors(error){
@@ -49,6 +49,13 @@ const GLOBAL_IMAGE_SCALE = 1000
 //
 //   return Promise.reject(error)
 // }
+
+function smoothValue(x, px, alpha = 0.5){
+  if ( px === undefined ){
+    return x
+  }
+  return alpha * x + (1 - alpha) * px
+}
 
 function loadFonts(){
   return new Promise((resolve, reject) => {
@@ -270,6 +277,7 @@ export default {
     })
 
     this.stage = app.stage
+    this.stage.interactive = true
     app.renderer.autoResize = true
     app.renderer.view.style.position = 'absolute'
     app.renderer.view.style.display = 'block'
@@ -292,8 +300,8 @@ export default {
       .drag()
       .decelerate()
       .pinch({
-        noDrag: true
-        , percent: 25
+        noDrag: false
+        , percent: 10
         // , center
       })
       .wheel({
@@ -319,6 +327,14 @@ export default {
       this.$emit('zoom', this.viewport.scaled)
     }).on('moved', () => {
       this.$emit('zoom', this.viewport.scaled)
+    }).on('pinch-start', () => {
+      this.stageInteract = true
+    }).on('pinch-end', () => {
+      this.stageInteract = false
+    }).on('drag-start', () => {
+      this.stageInteract = true
+    }).on('drag-end', () => {
+      this.stageInteract = false
     })
 
     this.pulsateFilter = new GlowFilter(
@@ -358,7 +374,8 @@ export default {
     this.stage.addChild(this.viewport)
 
     this.labelLayer = new PIXI.Container()
-    this.labelLayer.zIndex = 0
+    this.labelLayer.zIndex = 1
+    this.labelLayer.alpha = 0.6
     this.stage.addChild(this.labelLayer)
 
     this.bubbleLayer = new PIXI.Container()
@@ -479,9 +496,10 @@ export default {
       })
     }
     , initLengthScale(){
+      const margin = 30
       let ls = lengthScale(0.5 * Math.min(810, this.dimensions.width, this.dimensions.height))
       ls.graphics.zIndex = 9
-      ls.graphics.position.set(this.dimensions.width - 50, this.dimensions.height - 50)
+      ls.graphics.position.set(this.dimensions.width - margin, this.dimensions.height - margin)
       ls.setScale(1)
 
       this.$on('zoom', s => {
@@ -489,7 +507,7 @@ export default {
       })
 
       this.$watch('dimensions', ({ width, height }) => {
-        ls.graphics.position.set(width - 50, height - 50)
+        ls.graphics.position.set(width - margin, height - margin)
       })
 
       this.stage.addChild(ls.graphics)
@@ -517,13 +535,27 @@ export default {
       return guides
     }
     , initBg(){
-      let texture = Loader.resources.cityTile.texture
       let {width, height} = this.dimensions
-      let tile = new PIXI.TilingSprite(texture, width, height)
-      tile.alpha = 0.6
-      tile.tilePosition.set(width/2, height/2)
-      // tile.anchor.set(0.5)
-      tile.uvRespectAnchor = true
+
+      let gaussianBlur = new PIXI.filters.BlurFilter(
+        4 // strength
+        , 4 // quality
+      )
+      let groundTexture = Loader.resources.background.texture
+      let ground = new PIXI.TilingSprite(groundTexture, width, height)
+      ground.zIndex = -1
+      ground.alpha = 1
+      ground.tilePosition.set(width/2, height/2)
+      ground.filters = [
+        gaussianBlur
+      ]
+
+      let cloudsTexture = Loader.resources.clouds.texture
+      let clouds = new PIXI.TilingSprite(cloudsTexture, width, height)
+      clouds.zIndex = 0
+      clouds.alpha = 0.8
+      clouds.tilePosition.set(width/2, height/2)
+      this.clouds = clouds
 
       // this.viewport.on('moved', () => {
       //   let x = this.viewport.center.x
@@ -531,27 +563,40 @@ export default {
       //   let scale = this.viewport.scaled
       //   console.log(scale)
       //   // let parallax = scale * 0.1
-      //   tile.tilePosition.set(x * scale, y * scale)
-      //   // tile.tileScale.set(parallax, parallax)
+      //   ground.tilePosition.set(x * scale, y * scale)
+      //   // ground.tileScale.set(parallax, parallax)
       // })
 
-      const dist = 1000000
+      const groundDist = 4000000
+      const skyDist = 100000
       const z = 1000
+      function getParallax(scale, d){
+        return scale * (z + d) / (z + scale * d)
+      }
       this.$on('zoom', scale => {
-        let {width, height} = this.dimensions
-        let parallax = scale * (z + dist) / (z + scale * dist)
-        let pos = this.viewport.toScreen(width/2, height/2)
+        let groundParallax = getParallax(scale, groundDist)
+        let skyParallax = getParallax(scale * 4, skyDist)
+        // let {width, height} = this.dimensions
+        // let pos = this.viewport.toScreen(width/2, height/2)
         // console.log(this.viewport.toScreen(0, 0))
-        tile.tileScale.set(parallax, parallax)
-        // tile.tilePosition.set(pos.x * parallax, pos.y * parallax)
+        ground.tileScale.set(groundParallax, groundParallax)
+        clouds.tileScale.set(skyParallax, skyParallax)
+        // ground.tilePosition.set(pos.x * parallax, pos.y * parallax)
+
+        gaussianBlur.blur = Math.max(2, Math.min(5, 1 / scale / 5))
       })
 
       this.$watch('dimensions', ({ width, height }) => {
-        tile.width = width
-        tile.height = height
+        ground.width = width
+        ground.height = height
+        ground.tilePosition.set(width/2, height/2)
+        clouds.width = width
+        clouds.height = height
+        clouds.tilePosition.set(width/2, height/2)
       })
 
-      this.stage.addChild(tile)
+      this.stage.addChild(ground)
+      this.stage.addChild(clouds)
     }
     , initLaunchers(){
       let bg = new PIXI.Sprite(PIXI.Texture.WHITE)
@@ -634,7 +679,7 @@ export default {
       this.creaturesLayer.addChild(movingGraphic)
 
       // track
-      const trackWidth = 800000
+      const trackWidth = 2e7
       let track = new PIXI.Graphics()
       track.interactive = true
       track.lineStyle(2, 0xffffff, 1)
@@ -855,9 +900,13 @@ export default {
       let lastTime = 0
       let speed
 
+      const grabbableObject = track
+      grabbableObject.interactive = true
+      grabbableObject.cursor = 'grab'
+
       const setDead = () => {
-        this.flickGesture.position.set(100, 100)
-        handle.addChild(this.flickGesture)
+        // this.flickGesture.position.set(100, 100)
+        // handle.addChild(this.flickGesture)
 
         handle.position.y = viewport.toScreen(track.position).y
         handle.visible = true
@@ -874,10 +923,22 @@ export default {
         hide()
       }
 
+      // const minGrabSize = 50
+      const canGrab = () => {
+        if ( this.stageInteract ){ return false }
+        if ( creature.grabbing ){ return false }
+        if ( creature.isDead ){ return true }
+        if ( this.deadCreature && this.deadCreature !== creature ){ return false }
+        // let size = (image.width * viewport.scaled)
+        // if ( size < minGrabSize || size > this.dimensions.width ){ return false }
+        return true
+      }
+
       const grab = e => {
-        if ( (this.deadCreature && this.deadCreature !== creature) || creature.grabbing ){ return }
+        if ( !canGrab() ){ return }
+
         if ( e ){
-          if ( e.data.originalEvent.button ){ return }
+          if ( e.data.originalEvent.button > 0 ){ return }
           e.stopPropagation()
           handle.data = e.data
 
@@ -888,11 +949,12 @@ export default {
           creature.setYPosition(lastPos.y)
         }
 
+        speed = undefined
         clearTimeout(this.flyTimeout)
         this.launchableCreature = cfg
         this.setLaunchableSpeed(0)
-        track.zIndex = 10
-        trail.cursor = 'grabbing'
+        movingGraphic.zIndex = 100
+        grabbableObject.cursor = 'grabbing'
         handle.visible = false
         creature.paused = true
         creature.grabbing = true
@@ -902,18 +964,20 @@ export default {
         trailClone.visible = false
 
         let zoom = cfg.handleScale / Math.sqrt(cfg.size)
-        this.animateZoomTo(zoom, 200, () => {
-          if ( !creature.grabbing ){ return }
+        this.animateZoomTo(zoom, 1000, () => {
+          if ( !handle.data ){ return }
           let pos = viewport.toWorld(screenPos)
           creature.setXPosition(pos.x)
           creature.setYPosition(pos.y)
         })
       }
 
+      const margin = 100
       const move = (e) => {
         if ( !creature.grabbing ){ return }
         e.stopPropagation()
         screenPos = handle.data.getLocalPosition(handle.parent)
+        screenPos.y = Math.max(margin, Math.min(this.dimensions.height - margin, screenPos.y))
         const pos = viewport.toWorld(screenPos)
         creature.setXPosition(pos.x)
         creature.setYPosition(pos.y)
@@ -921,7 +985,7 @@ export default {
         const time = performance.now()
         let dt = Math.max(time - lastTime, minTimeDelay)
 
-        speed = Math.max((pos.x - lastPos.x) / dt, 0)
+        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
         this.setLaunchableSpeed(speed)
 
         lastPos = pos
@@ -935,7 +999,7 @@ export default {
           this.launchableCreature = null
         }, 4000)
 
-        tween({
+        return tween({
           from: { speed }
           , to: { speed: cfg.speed }
           , delay: 0
@@ -953,7 +1017,8 @@ export default {
         track.visible = false
         const startScale = trail.scale.clone()
         let tcx = trailClone.position.x = 1e12
-        tween({
+
+        return tween({
           from: { speed, scale: movingGraphic.scale.x, alpha: 1 }
           , to: { speed: 0, scale: 1e-9, alpha: 0 }
           , delay: 0
@@ -978,10 +1043,8 @@ export default {
         })
       }
 
-      const release = (e) => {
-        if ( !creature.grabbing ){ return }
-
-        e.stopPropagation()
+      const release = () => {
+        if ( !creature.grabbing || !handle.data ){ return }
 
         const time = performance.now()
         let dt = time - lastTime
@@ -989,34 +1052,95 @@ export default {
           dt = Math.max(dt, minTimeDelay)
           screenPos = handle.data.getLocalPosition(handle.parent)
           const pos = viewport.toWorld(screenPos)
-          speed = Math.max((pos.x - lastPos.x) / dt, 0)
+          speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
           this.setLaunchableSpeed(speed)
         }
 
         handle.data = null
-        handle.cursor = 'grab'
+        grabbableObject.cursor = 'grab'
         creature.paused = false
-        creature.grabbing = false
         track.zIndex = 0
 
         if ( speed < minThrowSpeed ){
+          creature.grabbing = false
           setDead()
         } else if ( speed >= cfg.speed ){
+          creature.grabbing = false
           fly(creature, speed)
         } else {
-          fall(creature)
+          fall(creature).then(() => {
+            creature.grabbing = false
+          })
         }
       }
 
-      track
-        .on('pointerdown', grab)
-        .on('pointermove', move)
-        .on('pointerup', release)
-        .on('pointerupoutside', release)
+      // grabbableObject
+      //   .on('pointerdown', grab)
+      //   .on('pointermove', move)
+        // .on('pointerup', release)
+        // .on('pointerupoutside', release)
 
       handle.on('pointerdown', grab)
 
       this.launchersLayer.addChild(handle)
+
+      // move tracks
+      let originalGrabPoint
+      let gestureDecision
+      const dragGestureThreshold = 50
+      const isLauncherDrag = () => {
+        if ( !!gestureDecision === gestureDecision ){ return gestureDecision }
+        if ( !originalGrabPoint || !track.data ){ return false }
+        let pos = viewport.toScreen(track.data.getLocalPosition(track.parent))
+        let dx = Math.abs(pos.x - originalGrabPoint.x)
+        let dy = Math.abs(pos.y - originalGrabPoint.y)
+        if ( (dy + dx) < dragGestureThreshold ){ return false }
+        gestureDecision = dx > dy
+        return gestureDecision
+      }
+
+      track.on('pointerover', () => {
+        if ( this.stageInteract || creature.grabbing ){ return }
+        track.alpha = 1
+      }).on('pointerout', () => {
+        track.alpha = 0.1
+      }).on('pointerdown', (e) => {
+        if ( this.stageInteract || creature.grabbing ){ return }
+        // if mousebutton is used and it's not left btn, this will be non-zero
+        if ( e.data.originalEvent.button ){ return }
+        e.stopPropagation()
+        originalGrabPoint = viewport.toScreen(e.data.getLocalPosition(track.parent))
+        track.data = e.data
+        track.cursor = 'grabbing'
+        track.dragging = true
+      }).on('pointermove', e => {
+        if ( creature.grabbing ){ return move(e) }
+        if ( this.stageInteract ){ return stopTrackDrag() }
+        if ( isLauncherDrag() ){
+          stopTrackDrag(e)
+          return grab(e)
+        }
+        if ( track.dragging ){
+          const newPosition = track.data.getLocalPosition(track.parent)
+          const bot = this.viewport.bottom
+          const top = this.viewport.top
+          const newY = Math.max(top, Math.min(bot, newPosition.y))
+          setYPosition( newY )
+        }
+      })
+
+      this.stage.on('pointerup', e => {
+        originalGrabPoint = null
+        gestureDecision = null
+        release(e)
+        stopTrackDrag(e)
+      })
+
+      function stopTrackDrag(){
+        track.data = null
+        track.cursor = 'grab'
+        track.dragging = false
+      }
 
       // export
       creature.grab = grab
@@ -1250,6 +1374,7 @@ export default {
   left: 0
   right: 0
   bottom: 0
+  user-select: none
 .launchable-selector
   position: absolute
   top: 2.5em
@@ -1305,7 +1430,7 @@ export default {
       width: 80%
       border-right: 1px solid rgba(0, 200, 0, 0.8)
     .bg
-      transition: width .15s linear
+      transition: width .05s linear
       height: 100%
       background: white
 .logo
