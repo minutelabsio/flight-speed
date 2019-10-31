@@ -878,13 +878,13 @@ export default {
       let lastTime = 0
       let speed
 
-      const grabbableObject = image
+      const grabbableObject = track
       grabbableObject.interactive = true
       grabbableObject.cursor = 'grab'
 
       const setDead = () => {
-        this.flickGesture.position.set(100, 100)
-        handle.addChild(this.flickGesture)
+        // this.flickGesture.position.set(100, 100)
+        // handle.addChild(this.flickGesture)
 
         handle.position.y = viewport.toScreen(track.position).y
         handle.visible = true
@@ -907,15 +907,16 @@ export default {
         if ( creature.grabbing ){ return false }
         if ( creature.isDead ){ return true }
         if ( this.deadCreature && this.deadCreature !== creature ){ return false }
-        let size = (image.width * viewport.scaled)
-        if ( size < minGrabSize || size > this.dimensions.width ){ return false }
+        // let size = (image.width * viewport.scaled)
+        // if ( size < minGrabSize || size > this.dimensions.width ){ return false }
         return true
       }
 
       const grab = e => {
         if ( !canGrab() ){ return }
+
         if ( e ){
-          if ( e.data.originalEvent.button ){ return }
+          if ( e.data.originalEvent.button > 0 ){ return }
           e.stopPropagation()
           handle.data = e.data
 
@@ -941,8 +942,8 @@ export default {
         trailClone.visible = false
 
         let zoom = cfg.handleScale / Math.sqrt(cfg.size)
-        this.animateZoomTo(zoom, 200, () => {
-          if ( !creature.grabbing ){ return }
+        this.animateZoomTo(zoom, 1000, () => {
+          if ( !handle.data ){ return }
           let pos = viewport.toWorld(screenPos)
           creature.setXPosition(pos.x)
           creature.setYPosition(pos.y)
@@ -1021,7 +1022,7 @@ export default {
       }
 
       const release = (e) => {
-        if ( !creature.grabbing ){ return }
+        if ( !creature.grabbing || !handle.data ){ return }
 
         const time = performance.now()
         let dt = time - lastTime
@@ -1051,19 +1052,31 @@ export default {
         }
       }
 
-      grabbableObject
-        .on('pointerdown', grab)
-        .on('pointermove', move)
+      // grabbableObject
+      //   .on('pointerdown', grab)
+      //   .on('pointermove', move)
         // .on('pointerup', release)
         // .on('pointerupoutside', release)
-
-      this.stage.on('pointerup', release)
 
       handle.on('pointerdown', grab)
 
       this.launchersLayer.addChild(handle)
 
       // move tracks
+      let originalGrabPoint
+      let gestureDecision
+      const dragGestureThreshold = 50
+      const isLauncherDrag = (e) => {
+        if ( !!gestureDecision === gestureDecision ){ return gestureDecision }
+        if ( !originalGrabPoint || !track.data ){ return false }
+        let pos = viewport.toScreen(track.data.getLocalPosition(track.parent))
+        let dx = Math.abs(pos.x - originalGrabPoint.x)
+        let dy = Math.abs(pos.y - originalGrabPoint.y)
+        if ( (dy + dx) < dragGestureThreshold ){ return false }
+        gestureDecision = dx > dy
+        return gestureDecision
+      }
+
       track.on('pointerover', () => {
         if ( this.stageInteract || creature.grabbing ){ return }
         track.alpha = 1
@@ -1074,12 +1087,17 @@ export default {
         // if mousebutton is used and it's not left btn, this will be non-zero
         if ( e.data.originalEvent.button ){ return }
         e.stopPropagation()
+        originalGrabPoint = viewport.toScreen(e.data.getLocalPosition(track.parent))
         track.data = e.data
         track.cursor = 'grabbing'
         track.dragging = true
-      }).on('pointermove', () => {
-        if ( creature.grabbing ){ return }
-        if ( this.stageInteract ){ return stopDrag() }
+      }).on('pointermove', e => {
+        if ( creature.grabbing ){ return move(e) }
+        if ( this.stageInteract ){ return stopTrackDrag() }
+        if ( isLauncherDrag() ){
+          stopTrackDrag(e)
+          return grab(e)
+        }
         if ( track.dragging ){
           const newPosition = track.data.getLocalPosition(track.parent)
           const bot = this.viewport.bottom
@@ -1088,10 +1106,15 @@ export default {
           setYPosition( newY )
         }
       })
-      .on('pointerup', stopDrag)
-      .on('pointerupoutside', stopDrag)
 
-      function stopDrag(){
+      this.stage.on('pointerup', e => {
+        originalGrabPoint = null
+        gestureDecision = null
+        release(e)
+        stopTrackDrag(e)
+      })
+
+      function stopTrackDrag(){
         track.data = null
         track.cursor = 'grab'
         track.dragging = false
