@@ -574,9 +574,9 @@ export default {
         return scale * (z + d) / (z + scale * d)
       }
       this.$on('zoom', scale => {
-        let {width, height} = this.dimensions
         let groundParallax = getParallax(scale, groundDist)
         let skyParallax = getParallax(scale * 4, skyDist)
+        // let {width, height} = this.dimensions
         // let pos = this.viewport.toScreen(width/2, height/2)
         // console.log(this.viewport.toScreen(0, 0))
         ground.tileScale.set(groundParallax, groundParallax)
@@ -923,7 +923,7 @@ export default {
         hide()
       }
 
-      const minGrabSize = 50
+      // const minGrabSize = 50
       const canGrab = () => {
         if ( this.stageInteract ){ return false }
         if ( creature.grabbing ){ return false }
@@ -1043,7 +1043,7 @@ export default {
         })
       }
 
-      const release = (e) => {
+      const release = () => {
         if ( !creature.grabbing || !handle.data ){ return }
 
         const time = performance.now()
@@ -1088,7 +1088,7 @@ export default {
       let originalGrabPoint
       let gestureDecision
       const dragGestureThreshold = 50
-      const isLauncherDrag = (e) => {
+      const isLauncherDrag = () => {
         if ( !!gestureDecision === gestureDecision ){ return gestureDecision }
         if ( !originalGrabPoint || !track.data ){ return false }
         let pos = viewport.toScreen(track.data.getLocalPosition(track.parent))
