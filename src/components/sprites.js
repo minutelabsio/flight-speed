@@ -4,17 +4,14 @@ import * as PIXI from 'pixi.js'
 export const Loader = PIXI.Loader.shared
 
 const SPRITES = {
-  'testDrag': require('@/assets/dragon-test.png')
-  // , 'nyan.png': require('@/assets/creatures/nyan.png')
-  // , 'nyan-jackson.gif': require('@/assets/creatures/nyan-jackson.gif')
-  // , 'nyan2': require('@/assets/creatures/nyan-balloon.gif')
-  // , 'nyan3': require('@/assets/creatures/nyan-zombie.gif')
-  // , 'nyan4': require('@/assets/creatures/nyan-coin.gif')
-  // , 'nyan5': require('@/assets/creatures/nyan-pumpkin.gif')
-  , 'cityTile': require('@/assets/bg.jpg')
+  'Autumn-Darter-Dragonfly.png': require('@/assets/creatures/Autumn-Darter-Dragonfly.png')
+  , 'Boeing-747-400.png': require('@/assets/creatures/Boeing-747-400.png')
+  , 'Canada-Goose.png': require('@/assets/creatures/Canada-Goose.png')
+  , 'Fly.png': require('@/assets/creatures/Fly.png')
+  , 'Paper-Plane.png': require('@/assets/creatures/Paper-Plane.png')
+  , 'Smaug.png': require('@/assets/creatures/Smaug.png')
   , 'background': require('@/assets/ML 12 - Ground.jpg')
   , 'clouds': require('@/assets/ML 12 - Clouds.png')
-  , '747-test.png': require('@/assets/creatures/747-test.png')
 }
 
 let LOAD_SPRITES_PROMISE = null

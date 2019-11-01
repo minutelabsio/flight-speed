@@ -36,7 +36,7 @@ import Creatures from '@/config/creatures.yaml'
 PIXI.settings.PRECISION_FRAGMENT = 'mediump'
 
 const svgResources = {
-  'bee': require('@/assets/bee.svg')
+  // 'bee': require('@/assets/bee.svg')
 }
 
 const SCREEN_MARGIN = 0 //200
