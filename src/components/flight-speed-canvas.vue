@@ -895,7 +895,7 @@ export default {
       handleText.anchor.set(0.5, 0)
       handle.addChild(handleText)
 
-      const minTimeDelay = 5
+      // const minTimeDelay = 5
       const minThrowSpeed = 1
       let screenPos
       let lastPos
