@@ -24,7 +24,8 @@ import WebFont from 'webfontloader'
 import _debounce from 'lodash/debounce'
 import _throttle from 'lodash/throttle'
 import _filter from 'lodash/filter'
-import { tween, Tweenable } from 'shifty'
+// import { tween, Tweenable } from 'shifty'
+import { tween } from '@/lib/tween'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
@@ -191,54 +192,54 @@ function makeOffscreenThumb( resource ){
   return offscreenIndicator
 }
 
-function flickGestureImage(){
-  let wrap = new PIXI.Graphics()
-  let flick = new PIXI.Graphics()
-  flick.beginFill(0xffffff, 1)
-  flick.drawRect(0, 0, 20, 40)
-  flick.drawRect(0, 40, 80, 70)
-  flick.endFill()
-
-  const distance = 50
-
-  let move = new Tweenable()
-  let moveConfig = {
-    from: { x: 0 }
-    , to: { x: distance }
-    , duration: 500
-    , easing: 'easeInOutQuad'
-    , step({ x }){
-      if (wrap._destroyed){ return }
-      flick.position.x = x
-    }
-  }
-
-  let moveBack = new Tweenable()
-  let moveBackConfig = {
-    from: { x: distance }
-    , to: { x: 0 }
-    , delay: 500
-    , duration: 2000
-    , easing: 'easeInOutQuad'
-    , step({ x }){
-      if (wrap._destroyed){ return }
-      flick.position.x = x
-    }
-  }
-
-  function animate(){
-    if (wrap._destroyed){ return }
-    move.tween(moveConfig).then(() => {
-      if (wrap._destroyed){ return }
-      moveBack.tween(moveBackConfig).then(animate)
-    })
-  }
-
-  animate()
-
-  wrap.addChild(flick)
-  return wrap
-}
+// function flickGestureImage(){
+//   let wrap = new PIXI.Graphics()
+//   let flick = new PIXI.Graphics()
+//   flick.beginFill(0xffffff, 1)
+//   flick.drawRect(0, 0, 20, 40)
+//   flick.drawRect(0, 40, 80, 70)
+//   flick.endFill()
+//
+//   const distance = 50
+//
+//   let move = new Tweenable()
+//   let moveConfig = {
+//     from: { x: 0 }
+//     , to: { x: distance }
+//     , duration: 500
+//     , easing: 'easeInOutQuad'
+//     , step({ x }){
+//       if (wrap._destroyed){ return }
+//       flick.position.x = x
+//     }
+//   }
+//
+//   let moveBack = new Tweenable()
+//   let moveBackConfig = {
+//     from: { x: distance }
+//     , to: { x: 0 }
+//     , delay: 500
+//     , duration: 2000
+//     , easing: 'easeInOutQuad'
+//     , step({ x }){
+//       if (wrap._destroyed){ return }
+//       flick.position.x = x
+//     }
+//   }
+//
+//   function animate(){
+//     if (wrap._destroyed){ return }
+//     move.tween(moveConfig).then(() => {
+//       if (wrap._destroyed){ return }
+//       moveBack.tween(moveBackConfig).then(animate)
+//     })
+//   }
+//
+//   animate()
+//
+//   wrap.addChild(flick)
+//   return wrap
+// }
 
 export default {
   name: 'FlightSpeedCanvas'
@@ -435,7 +436,7 @@ export default {
       await loadSprites()
       await loadFonts()
 
-      this.flickGesture = flickGestureImage()
+      // this.flickGesture = flickGestureImage()
 
       this.creatures = []
       let toDie
@@ -464,8 +465,9 @@ export default {
 
       const draw = this.draw.bind(this)
       this.app.ticker.add(draw)
-      this.animateEntrance()
+
       Promise.delay(200).then(() => {
+        this.animateEntrance()
         this.paused = false
         toDie.setDead()
       })
@@ -1048,13 +1050,14 @@ export default {
 
         const time = performance.now()
         let dt = time - lastTime
-        if ( dt > 2 ){
-          dt = Math.max(dt, minTimeDelay)
-          screenPos = handle.data.getLocalPosition(handle.parent)
-          const pos = viewport.toWorld(screenPos)
-          speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
-          this.setLaunchableSpeed(speed)
+        if ( dt > 100 ){
+          speed = 0
         }
+        dt = Math.max(dt, minTimeDelay)
+        screenPos = handle.data.getLocalPosition(handle.parent)
+        const pos = viewport.toWorld(screenPos)
+        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
+        this.setLaunchableSpeed(speed)
 
         handle.data = null
         grabbableObject.cursor = 'grab'

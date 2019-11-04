@@ -11,10 +11,6 @@ export default {
   , data: () => ({
   })
   , created(){
-    document.documentElement.addEventListener('scroll', e => {
-      console.log('test')
-      e.preventDefault()
-    })
   }
 }
 </script>
@@ -26,5 +22,5 @@ export default {
   left: 0
   right: 0
   bottom: 0
-  background: url('./assets/bg.jpg')
+  background: url('./assets/ML 12 - Background.jpg')
 </style>
