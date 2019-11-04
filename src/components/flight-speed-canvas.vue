@@ -936,6 +936,28 @@ export default {
         return true
       }
 
+      let monitorSpeed = false
+      const speedMonitorLoop = () => {
+        window.requestAnimationFrame(speedMonitorLoop)
+        if ( !monitorSpeed ){
+          speed = undefined
+          return
+        }
+
+        const pos = viewport.toWorld(screenPos)
+        const time = performance.now()
+        let dt = time - lastTime
+
+        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
+
+        lastTime = time
+        lastPos = pos
+
+        this.setLaunchableSpeed(speed)
+      }
+
+      speedMonitorLoop()
+
       const grab = e => {
         if ( !canGrab() ){ return }
 
@@ -952,6 +974,7 @@ export default {
         }
 
         speed = undefined
+        monitorSpeed = true
         clearTimeout(this.flyTimeout)
         this.launchableCreature = cfg
         this.setLaunchableSpeed(0)
@@ -983,15 +1006,6 @@ export default {
         const pos = viewport.toWorld(screenPos)
         creature.setXPosition(pos.x)
         creature.setYPosition(pos.y)
-
-        const time = performance.now()
-        let dt = Math.max(time - lastTime, minTimeDelay)
-
-        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
-        this.setLaunchableSpeed(speed)
-
-        lastPos = pos
-        lastTime = time
       }
 
       const fly = (creature, speed) => {
@@ -1009,6 +1023,7 @@ export default {
           , easing: 'easeOutQuad'
           , step: state => {
             creature.speed = state.speed
+            this.setLaunchableSpeed(state.speed)
           }
         })
       }
@@ -1048,17 +1063,9 @@ export default {
       const release = () => {
         if ( !creature.grabbing || !handle.data ){ return }
 
-        const time = performance.now()
-        let dt = time - lastTime
-        if ( dt > 100 ){
-          speed = 0
-        }
-        dt = Math.max(dt, minTimeDelay)
-        screenPos = handle.data.getLocalPosition(handle.parent)
-        const pos = viewport.toWorld(screenPos)
-        speed = smoothValue(Math.max((pos.x - lastPos.x) / dt, 0), speed, 0.5)
-        this.setLaunchableSpeed(speed)
+        // this.setLaunchableSpeed(speed)
 
+        monitorSpeed = false
         handle.data = null
         grabbableObject.cursor = 'grab'
         creature.paused = false
