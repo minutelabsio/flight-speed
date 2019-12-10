@@ -36,7 +36,7 @@
   name: 'Autumn darter dragonfly'
   image: 'Autumn-Darter-Dragonfly.png'
   speed: 0.28
-  size: 0.1
+  size: 0.001
   mass: 0.003
   position:
     x: 0
