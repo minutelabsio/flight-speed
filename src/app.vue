@@ -22,5 +22,5 @@ export default {
   left: 0
   right: 0
   bottom: 0
-  background: url('./assets/ML 12 - Background.jpg')
+  background: url('./assets/ML 12 - Ground.jpg')
 </style>

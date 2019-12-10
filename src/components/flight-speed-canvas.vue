@@ -571,12 +571,12 @@ export default {
 
       const groundDist = 4000000
       const skyDist = 100000
-      const z = 1000
+      const z = 5000
       function getParallax(scale, d){
         return scale * (z + d) / (z + scale * d)
       }
       this.$on('zoom', scale => {
-        let groundParallax = getParallax(scale, groundDist)
+        let groundParallax = getParallax(scale / 2, groundDist)
         let skyParallax = getParallax(scale * 4, skyDist)
         // let {width, height} = this.dimensions
         // let pos = this.viewport.toScreen(width/2, height/2)
