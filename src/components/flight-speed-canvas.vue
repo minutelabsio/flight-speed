@@ -1085,6 +1085,12 @@ export default {
             creature.grabbing = false
           })
         }
+
+        this.$ga.event(
+          'flight-speed'
+          , 'throw'
+          , cfg.name
+        )
       }
 
       // grabbableObject
