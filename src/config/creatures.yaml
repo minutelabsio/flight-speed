@@ -25,9 +25,9 @@
 # - house-fly:
 #   name: 'House fly'
 #   image: 'Fly.png'
-#   speed: 1
-#   size: 1
-#   mass: 1
+#   speed: 0.84
+#   size: 0.00045
+#   mass: 0.00012
 #   position:
 #     x: 0
 #     y: 1600
