@@ -16,6 +16,7 @@
   //- .launchable-selector
   //-   b-select(v-model="selectedLaunchable")
   //-     option(v-for="(creature, key) in creatureList", :value="key") {{ creature.name }}
+  .ml-spinner(v-if="notReady")
   .canvas(ref="canvas")
 </template>
 <script>
@@ -248,6 +249,7 @@ export default {
   , components: {}
   , data: () => ({
     paused: true
+    , notReady: true
     , dimensions: {
       width: window.innerWidth
       , height: window.innerHeight
@@ -453,9 +455,9 @@ export default {
           , handleScale: 0.10
         })
 
-        if ( c.name === 'Bald eagle' ){
-          toDie = flyer
-        }
+        // if ( c.name === 'Bald eagle' ){
+        //   toDie = flyer
+        // }
       })
 
       this.initBg()
@@ -469,7 +471,8 @@ export default {
       Promise.delay(200).then(() => {
         this.animateEntrance()
         this.paused = false
-        toDie.setDead()
+        this.notReady = false
+        // toDie.setDead()
       })
     }
     , animateEntrance(){
