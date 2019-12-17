@@ -83,14 +83,14 @@
           h3.title.is-size-4 Source Code
           p.
             As always, freely available on
-            <a href="https://github.com/minutelabsio/flight-speed" target="_blank">github</a>.
+            <a :href="'https://github.com/minutelabsio/' + $labConfig.repo" target="_blank">github</a>.
 
           h3.title.is-size-4 Bug Reports
           p.
             If you find a bug, you can post it on
             <a href="https://www.patreon.com/minutelabsio" target="_blank">patreon</a>,
             <a href="mailto:bugs@minutelabs.io">email us</a>,
-            or post it on <a href="https://github.com/minutelabsio/flight-speed" target="_blank">github</a>.
+            or post it on <a :href="'https://github.com/minutelabsio/' + $labConfig.repo" target="_blank">github</a>.
 
 
 </template>
