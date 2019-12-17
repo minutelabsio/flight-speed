@@ -313,7 +313,7 @@ export default {
       })
       .clampZoom({
         minHeight: 100
-        , maxHeight: 800000
+        , maxHeight: 400000
       })
       .clamp({
         top: -800000
@@ -441,13 +441,13 @@ export default {
       // this.flickGesture = flickGestureImage()
 
       this.creatures = []
-      let toDie
+      // let toDie
 
       Creatures.forEach(c => {
-        let flyer = this.createFlyer({
+        this.createFlyer({
           resource: c.image
           , x: this.viewport.left / 4
-          , y: c.position.y
+          , y: c.position.y + 1000
           , speed: c.speed
           , scale: Math.sqrt(c.size)
           , size: c.size
