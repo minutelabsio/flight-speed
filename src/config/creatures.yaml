@@ -16,7 +16,8 @@
   name: 'House fly'
   image: 'Fly.png'
   speed: 0.84
-  size: 0.00045
+  size: 0.00635
+  wingArea: 0.00045
   mass: 0.00012
   position:
     x: 0
@@ -26,7 +27,8 @@
   name: 'Autumn darter dragonfly'
   image: 'Autumn-Darter-Dragonfly.png'
   speed: 0.28
-  size: 0.001
+  size: 0.04
+  wingArea: 0.001
   mass: 0.003
   position:
     x: 0
@@ -36,7 +38,8 @@
   name: 'Blue jay'
   image: 'Blue-Jay.png'
   speed: 9.88
-  size: 0.024
+  size: 0.26
+  wingArea: 0.024
   mass: 0.89
   position:
     x: 0
@@ -46,7 +49,8 @@
   name: 'Little brown bat'
   image: 'Little-Brown-Bat.png'
   speed: 4.33
-  size: 0.01
+  size: 
+  wingArea: 0.01
   mass: 0.08
   position:
     x: 0
@@ -56,7 +60,8 @@
   name: 'Canada goose'
   image: 'Canada-Goose.png'
   speed: 23.15
-  size: 0.28
+  size: 0.7
+  wingArea: 0.28
   mass: 57
   position:
     x: 0
@@ -66,7 +71,8 @@
   name: 'Wandering albatross'
   image: 'Wandering-Albatross.png'
   speed: 19.22
-  size: 0.62
+  size: 1.21
+  wingArea: 0.62
   mass: 87
   position:
     x: 0
@@ -76,7 +82,8 @@
   name: 'Quetzalcoatlus pterosaur'
   image: 'Pterosaur.png'
   speed: 21.94
-  size: 13.4
+  size: 9.6
+  wingArea: 13.4
   mass: 2450
   position:
     x: 0
@@ -86,7 +93,8 @@
   name: 'Skyrim Dragon'
   image: 'Skyrim.png'
   speed: 79.58
-  size: 20
+  size: 13
+  wingArea: 20
   mass: 48,126.37
   position:
     x: 0
@@ -96,7 +104,8 @@
   name: 'Hungarian Horntail'
   image: 'Hungarian-Horntail.png'
   speed: 73.43
-  size: 31
+  size: 17
+  wingArea: 31
   mass: 63,519.84
   position:
     x: 0
@@ -107,7 +116,8 @@
   name: 'Boeing 747-400'
   image: 'Boeing-747-400.png'
   speed: 140.84
-  size: 525
+  size: 70.66
+  wingArea: 525
   mass: 3950000
   position:
     x: 0
@@ -117,7 +127,8 @@
   name: 'Vermithrax Pejorative'
   image: 'Vermithrax.png'
   speed: 81
-  size: 240
+  size: 27
+  wingArea: 240
   mass: 598,395.65
   position:
     x: 0
@@ -127,7 +138,8 @@
   name: 'Smaug'
   image: 'Smaug.png'
   speed: 131.15
-  size: 1600
+  size: 130
+  wingArea: 1600
   mass: 10,458,345.19
   position:
     x: 0
@@ -139,7 +151,8 @@
 #   name: 'Drogon'
 #   image: 'Fly.png'
 #   speed: 131.01
-#   size: 170
+#   size: 27
+#   wingArea: 170
 #   mass: 1,108,764.39
 #   position:
 #     x: 0
