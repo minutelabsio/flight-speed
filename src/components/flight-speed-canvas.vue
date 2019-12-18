@@ -313,7 +313,7 @@ export default {
       })
       .clampZoom({
         minHeight: 100
-        , maxHeight: 400000
+        , maxHeight: 600000
       })
       .clamp({
         top: -800000
@@ -449,7 +449,7 @@ export default {
           , x: this.viewport.left / 4
           , y: c.position.y + 1000
           , speed: c.speed
-          , scale: Math.sqrt(c.size)
+          , scale: c.size
           , size: c.size
           , name: c.name
           , handleScale: 0.10

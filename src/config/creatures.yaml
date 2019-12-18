@@ -32,7 +32,18 @@
   mass: 0.003
   position:
     x: 0
-    y: -300
+    y: -400
+
+- little-brown-bat:
+  name: 'Little brown bat'
+  image: 'Little-Brown-Bat.png'
+  speed: 4.33
+  size: 0.0875
+  wingArea: 0.01
+  mass: 0.08
+  position:
+    x: 0
+    y: -900
 
 - blue-jay:
   name: 'Blue jay'
@@ -43,18 +54,7 @@
   mass: 0.89
   position:
     x: 0
-    y: -500
-
-- little-brown-bat:
-  name: 'Little brown bat'
-  image: 'Little-Brown-Bat.png'
-  speed: 4.33
-  size: 
-  wingArea: 0.01
-  mass: 0.08
-  position:
-    x: 0
-    y: -800
+    y: -1600
 
 - canada-goose:
   name: 'Canada goose'
@@ -65,7 +65,7 @@
   mass: 57
   position:
     x: 0
-    y: -1300
+    y: -2800
 
 - wandering-albatross:
   name: 'Wandering albatross'
@@ -76,7 +76,7 @@
   mass: 87
   position:
     x: 0
-    y: -2800
+    y: -4800
 
 - quetzalcoatlus-pterosaur:
   name: 'Quetzalcoatlus pterosaur'
@@ -87,7 +87,7 @@
   mass: 2450
   position:
     x: 0
-    y: -5300
+    y: -9000
 
 - skyrim-dragon:
   name: 'Skyrim Dragon'
@@ -98,7 +98,7 @@
   mass: 48,126.37
   position:
     x: 0
-    y: -10100
+    y: -18200
 
 - hungarian-horntail:
   name: 'Hungarian Horntail'
@@ -109,19 +109,7 @@
   mass: 63,519.84
   position:
     x: 0
-    y: -21000
-
-
-- boeing-747:
-  name: 'Boeing 747-400'
-  image: 'Boeing-747-400.png'
-  speed: 140.84
-  size: 70.66
-  wingArea: 525
-  mass: 3950000
-  position:
-    x: 0
-    y: -40000
+    y: -46000
 
 - vermithrax:
   name: 'Vermithrax Pejorative'
@@ -132,7 +120,18 @@
   mass: 598,395.65
   position:
     x: 0
-    y: -70000
+    y: -100000
+
+- boeing-747:
+  name: 'Boeing 747-400'
+  image: 'Boeing-747-400.png'
+  speed: 140.84
+  size: 70.66
+  wingArea: 525
+  mass: 3950000
+  position:
+    x: 0
+    y: -160000
 
 - smaug:
   name: 'Smaug'
@@ -143,7 +142,7 @@
   mass: 10,458,345.19
   position:
     x: 0
-    y: -110000
+    y: -250000
 
 
 
