@@ -34,6 +34,17 @@
     x: 0
     y: -400
 
+- paper-airplane:
+  name: 'Paper airplane'
+  image: 'Paper-airplane.png'
+  speed: 5.38
+  size: 0.28
+  wingArea: 0.004
+  mass: 0.044
+  position:
+    x: 0
+    y: -900
+
 - little-brown-bat:
   name: 'Little brown bat'
   image: 'Little-Brown-Bat.png'
