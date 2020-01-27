@@ -184,7 +184,7 @@ function makeOffscreenThumb( resource ){
   bubble.rotation = Math.PI
   bubble.name = 'bubble'
   let thumb = resourceToGraphics(resource)
-  let s = thumb.scale.x * (2 * r - 10) / Math.max(thumb.width, thumb.height)
+  let s = thumb.scale.x * (2 * r - 20) / Math.max(thumb.width, thumb.height)
   thumb.scale.set(s, s)
   thumb.anchor.set(0.5, 0.5)
   offscreenIndicator.addChild(bubble)
@@ -291,7 +291,7 @@ export default {
       screenWidth: this.dimensions.width
       , screenHeight: this.dimensions.height
       , worldWidth: 10
-      , worldHeight: 1600000
+      , worldHeight: 2000000
       , interaction: app.renderer.plugins.interaction
       , center
       , passiveWheel: false
@@ -312,12 +312,12 @@ export default {
         // , center
       })
       .clampZoom({
-        minHeight: 100
-        , maxHeight: 600000
+        minHeight: 10
+        , maxHeight: 1800000
       })
       .clamp({
-        top: -800000
-        , bottom: 800000
+        top: -1000000
+        , bottom: 1000000
         , left: 0
         , right: 0
       })
@@ -491,7 +491,7 @@ export default {
 
       return tween({
         from: { zoom: 0.01 }
-        , to: { zoom: 0.1 }
+        , to: { zoom: 0.2 }
         , delay: process.env.NODE_ENV === 'production' ? 1000 : 0
         , duration: process.env.NODE_ENV === 'production' ? 4000 : 500
         , easing: 'easeInOutSine'
@@ -573,7 +573,7 @@ export default {
       // })
 
       const groundDist = 4000000
-      const skyDist = 100000
+      const skyDist = 200000
       const z = 5000
       function getParallax(scale, d){
         return scale * (z + d) / (z + scale * d)
@@ -991,7 +991,9 @@ export default {
         fixScale()
         trailClone.visible = false
 
-        let zoom = cfg.handleScale / Math.sqrt(cfg.size)
+        // only zoom to the creature if it's the first time trying to grab the creature
+        if (this.deadCreature === creature){ return }
+        let zoom = cfg.handleScale / cfg.size
         this.animateZoomTo(zoom, 1000, () => {
           if ( !handle.data ){ return }
           let pos = viewport.toWorld(screenPos)
@@ -1074,7 +1076,7 @@ export default {
         creature.paused = false
         track.zIndex = 0
 
-        if ( speed < minThrowSpeed ){
+        if ( speed < minThrowSpeed / this.viewport.scaled ){
           creature.grabbing = false
           setDead()
         } else if ( speed >= cfg.speed ){
