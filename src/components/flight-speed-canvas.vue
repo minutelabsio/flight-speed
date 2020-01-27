@@ -13,6 +13,7 @@
     .bar
       .inner
         .bg(:style="{ width: speedPercentage + '%', backgroundColor: speedColor }")
+  .speed-display(v-else) {{ selectedCreatureName }}: {{ selectedCreatureTargetSpeed }} m/s
   //- .launchable-selector
   //-   b-select(v-model="selectedLaunchable")
   //-     option(v-for="(creature, key) in creatureList", :value="key") {{ creature.name }}
@@ -257,6 +258,7 @@ export default {
     , creatureList: Creatures
     , launchableCreature: null
     , launchableSpeed: 0
+    , selectedCreature: {}
   })
   , created(){
     this.time = 0
@@ -429,6 +431,12 @@ export default {
 
       return c
     }
+    , selectedCreatureTargetSpeed(){
+      return this.selectedCreature.speed
+    }
+    , selectedCreatureName(){
+      return this.selectedCreature.name
+    }
   }
   , mounted(){
     this.$refs.canvas.appendChild(this.app.view)
@@ -459,6 +467,8 @@ export default {
         //   toDie = flyer
         // }
       })
+
+      this.selectedCreature = this.creatures[4] // paper airplane
 
       this.initBg()
       this.initLengthScale()
@@ -1130,6 +1140,7 @@ export default {
         // if mousebutton is used and it's not left btn, this will be non-zero
         if ( e.data.originalEvent.button ){ return }
         e.stopPropagation()
+        this.selectedCreature = creature
         originalGrabPoint = viewport.toScreen(e.data.getLocalPosition(track.parent))
         track.data = e.data
         track.cursor = 'grabbing'
@@ -1412,7 +1423,9 @@ export default {
   a
     color: white
     text-decoration: underline
-.speed-o-meter
+
+.speed-o-meter,
+.speed-display
   position: absolute
   bottom: 30px
   left: 0px
@@ -1454,6 +1467,8 @@ export default {
       transition: width .05s linear
       height: 100%
       background: white
+.speed-display
+  font-size: 18px
 .logo
   background: white
   border-radius: 50%
