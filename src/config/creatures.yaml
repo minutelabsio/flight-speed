@@ -12,27 +12,27 @@
 #     x: 0 # ignored for now
 #     y: 0 # height above (or below) the middle
 
-- house-fly:
-  name: 'House fly'
-  image: 'Fly.png'
-  speed: 0.84
-  size: 0.00635
-  wingArea: 0.00045
-  mass: 0.00012
-  position:
-    x: 0
-    y: 1500
-
-- dragonfly:
-  name: 'Autumn darter dragonfly'
-  image: 'Autumn-Darter-Dragonfly.png'
-  speed: 0.28
-  size: 0.04
-  wingArea: 0.001
-  mass: 0.003
-  position:
-    x: 0
-    y: 1000
+# - house-fly:
+#   name: 'House fly'
+#   image: 'Fly.png'
+#   speed: 0.84
+#   size: 0.00635
+#   wingArea: 0.00045
+#   mass: 0.00012
+#   position:
+#     x: 0
+#     y: 1500
+#
+# - dragonfly:
+#   name: 'Autumn darter dragonfly'
+#   image: 'Autumn-Darter-Dragonfly.png'
+#   speed: 0.28
+#   size: 0.04
+#   wingArea: 0.001
+#   mass: 0.003
+#   position:
+#     x: 0
+#     y: 1000
 
 
 - little-brown-bat:

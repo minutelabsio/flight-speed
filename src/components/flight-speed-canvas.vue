@@ -468,7 +468,7 @@ export default {
         // }
       })
 
-      this.selectedCreature = this.creatures[4] // paper airplane
+      this.selectedCreature = this.creatures[2] // paper airplane
 
       this.initBg()
       this.initLengthScale()
