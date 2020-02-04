@@ -27,7 +27,7 @@ import _debounce from 'lodash/debounce'
 import _throttle from 'lodash/throttle'
 import _filter from 'lodash/filter'
 // import { tween, Tweenable } from 'shifty'
-import { tween } from '@/lib/tween'
+import { tween, getTweenGroup } from '@/lib/tween'
 import { unit } from 'mathjs'
 import { Loader, loadSprites } from '@/components/sprites'
 import * as PIXI from 'pixi.js'
@@ -408,6 +408,7 @@ export default {
     this.init()
   }
   , beforeDestroy(){
+    getTweenGroup().removeAll()
     this.app.destroy(true, { children: true })
   }
   , watch: {
