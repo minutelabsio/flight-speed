@@ -13,7 +13,7 @@
     .bar
       .inner
         .bg(:style="{ width: speedPercentage + '%', backgroundColor: speedColor }")
-  .speed-display(v-else) {{ selectedCreatureName }}: {{ selectedCreatureTargetSpeed }} m/s
+  .speed-display(v-else) {{ selectedCreatureName }}: {{ selectedCreatureTargetSpeed.toFixed(2) }} m/s
   //- .launchable-selector
   //-   b-select(v-model="selectedLaunchable")
   //-     option(v-for="(creature, key) in creatureList", :value="key") {{ creature.name }}
@@ -433,7 +433,7 @@ export default {
       return c
     }
     , selectedCreatureTargetSpeed(){
-      return this.selectedCreature.speed
+      return +this.selectedCreature.speed
     }
     , selectedCreatureName(){
       return this.selectedCreature.name
@@ -910,7 +910,7 @@ export default {
       handle.addChild(handleText)
 
       // const minTimeDelay = 5
-      const minThrowSpeed = 1
+      const minThrowSpeed = 0.1
       let screenPos
       let lastPos
       let lastTime = 0
